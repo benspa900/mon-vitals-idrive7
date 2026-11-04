@@ -1,0 +1,14 @@
+'use strict';
+const assert = require('assert');
+const values = require('../apps/benspa_vitals/values');
+assert.strictEqual(values.instantFuel(6.72, 80), 8.4);
+assert.strictEqual(values.instantFuel(6.72, 0), null);
+assert.strictEqual(values.instantFuel(6.72, 4.9), null);
+assert.strictEqual(values.instantFuel(null, 80), null);
+assert.strictEqual(values.instantFuel(-1, 80), null);
+assert.ok(Math.abs(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 1, consumptionAverage1BC1: 71 }) - 7.1) < 1e-9);
+assert.ok(Math.abs(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 'VERBRAUCH_IN_L_S_100KM', consumptionAverage1BC1: 84 }) - 8.4) < 1e-9);
+assert.strictEqual(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 2, consumptionAverage1BC1: 71 }), null);
+assert.strictEqual(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 1, consumptionAverage1BC1: 65535 }), null);
+assert.strictEqual(values.averageFuel(null), null);
+console.log('Consumption: valid readings, unknown units and stationary behavior OK');

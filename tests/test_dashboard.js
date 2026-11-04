@@ -1,0 +1,18 @@
+'use strict';
+const assert = require('assert');
+const dashboard = require('../apps/benspa_vitals/dashboard');
+const seen = [];
+const cv = { text(s,x,y,size,color,opts) { seen.push({s,x,y}); return String(s).length * size / 2; }, textWidth(s,n) { return String(s).length*n/2; }, fillRect() {}, line() {} };
+const t = { text:'white', dim:'gray', accent:'blue', warn:'yellow' };
+const G = { segBar(cv,t,x,y,w,h,spec) { assert.ok(Number.isFinite(spec.max) && spec.max > 0); }, bar() {} };
+const d = { rpm:null, speed:null, speedUnit:'km/h', gear:null, power:null, powerUnit:'kW', powerMax:215, torque:null, torqueUnit:'Nm', torqueMax:900, boost:null, boostUnit:'bar', boostMax:2.5, tempUnit:'C', pressures:[{}, {}, {}, {}], peaks:{}, pressureUnit:'bar' };
+dashboard.draw(cv, t, G, d);
+assert.ok(seen.some(x => x.s === '--'), 'Unavailable readings are explicit');
+assert.ok(seen.some(x => x.s === 'CIBLE --'), 'Missing tyre target is explicit');
+assert.ok(!seen.some(x => x.s === 'DEMO'), 'Real mode must not claim demo');
+seen.length = 0;
+d.demo = true; d.speed = 96; d.gear = { letter:'S', num:'3', est:false };
+dashboard.draw(cv, t, G, d);
+assert.ok(seen.some(x => x.s === 'DEMO'), 'Demo values are marked');
+assert.ok(seen.some(x => x.s === 'S3'), 'Mode and gear shown');
+console.log('Dashboard: unavailable values, demo badge and gear OK');

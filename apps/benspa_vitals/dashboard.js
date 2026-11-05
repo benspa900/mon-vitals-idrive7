@@ -7,7 +7,7 @@ const number = (n, decimals) => finite(n) ? n.toFixed(decimals || 0).replace('.'
 function draw(cv, t, G, d) {
     // Spread the composition down the available page, including the extra full-screen area.
     const bottom = G.pageBottom(cv), Y = n => Math.round(18 + n * (bottom - 34) / 465);
-    const white = t.text, dim = t.dim, muted = '#293b48', blue = '#0872e9', light = '#69d4ff', red = '#ec243f';
+    const white = t.text, dim = t.dim, muted = '#293b48', blue = '#1f5fd0', light = '#81c4ff', red = '#ec243f';
     const label = (s, x, y, align, size) => cv.text(s, x, Y(y), size || 22, dim, { font:'bold', align:align || 'left', spacing:1 });
     const text = (s, x, y, size, align, color) => cv.text(String(s), x, Y(y), size, color || white, { font:'num', align:align || 'left' });
     const x0 = 28, x1 = 450, c = 800;
@@ -17,7 +17,7 @@ function draw(cv, t, G, d) {
     label('MOY.', 245, 61, 'left', 18); text(number(d.average, 1), 305, 63, 32);
     label('L/100 KM', x0, 85, 'left', 16);
     const leftWidth = x1-x0, consoY=Y(97);
-    G.segBar(cv,t,x0,consoY,leftWidth,22,{panel:false,value:d.instant,min:0,max:20,step:20/12,color:blue});
+    G.segBar(cv,t,x0,consoY,leftWidth,22,{panel:false,value:d.instant,min:0,max:20,step:20/16,ramp:'hot'});
     if (finite(d.average)) {
         const p=x0+(leftWidth-18)*clamp(d.average/20,0,1);
         cv.line(p+18,consoY-3,p,consoY+25,3,light);
@@ -56,7 +56,7 @@ function draw(cv, t, G, d) {
         const min=scale(0), max=scale(row[3]);
         const theme=Object.assign({},t,{hang:peakColor,track:trackColor});
         G.segBar(cv,theme,x0,Y(y+20),leftWidth,22,{
-            panel:false,value:row[1],min,max,step:(max-min)/12,color:currentColor,
+            panel:false,value:row[1],min,max,step:(max-min)/16,color:currentColor,
             peak:finite(row[1]) ? row[2] : null,hangTop:false,
         });
     });
@@ -120,7 +120,7 @@ function draw(cv, t, G, d) {
     label('tr/min', c, 414, 'center', 21);
     if (d.warmGuideEnabled) cv.text(finite(d.warmGuide) ? 'Rev Limit' : 'HUILE --', c, Y(445), 16, finite(d.warmGuide) ? '#ffb020' : dim, {font:'bold',align:'center'});
     // Right side: separate tracks for the current value and the held maximum.
-    function segmentedTrack(x,y,w,h,value,max,color) {
+    function segmentedTrack(x,y,w,h,value,max,peak) {
         const count=16, slant=5, step=(w-slant)/count, gap=2;
         const progress=finite(value) ? clamp(value/max,0,1)*count : 0;
         for (let i=0;i<count;i++) {
@@ -128,7 +128,10 @@ function draw(cv, t, G, d) {
             const segment=(width,col) => cv.quad([[x0+slant,y],[x0+slant+width,y],[x0+width,y+h],[x0,y+h]],col);
             segment(length,muted);
             const amount=clamp(progress-i,0,1);
-            if (amount>0) segment(length*amount,color);
+            if (amount>0) {
+                const color=G.ramp(t.hotRamp || t.ramp,(i+0.5)/count);
+                segment(length*amount,peak ? G.mix(color,'#ffffff',0.35) : color);
+            }
         }
     }
     function metric(title, value, unit, max, peak, index, decimals) {
@@ -137,9 +140,9 @@ function draw(cv, t, G, d) {
         const valueWidth = text(number(value,decimals),vx,y+36,37);
         cv.text(' '+unit, vx+valueWidth, Y(y+36), 20, dim);
         max = finite(max) && max > 0 ? max : 1;
-        [[value,blue],[finite(value) ? peak : null,light]].forEach((row,i) => {
+        [value,finite(value) ? peak : null].forEach((reading,i) => {
             const yTrack=Y(y+48+i*12);
-            segmentedTrack(bx,yTrack,bw,6,row[0],max,row[1]);
+            segmentedTrack(bx,yTrack,bw,6,reading,max,i===1);
         });
     }
     const p=d.peaks || {};

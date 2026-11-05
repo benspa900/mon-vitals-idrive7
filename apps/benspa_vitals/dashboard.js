@@ -17,7 +17,7 @@ function draw(cv, t, G, d) {
     label('MOY.', 245, 61, 'left', 18); text(number(d.average, 1), 305, 63, 32);
     label('L/100 KM', x0, 85, 'left', 16);
     const leftWidth = x1-x0, consoY=Y(97);
-    G.segBar(cv,t,x0,consoY,leftWidth,22,{panel:false,value:d.instant,min:0,max:20,step:20/16,ramp:'hot'});
+    G.segBar(cv,t,x0,consoY,leftWidth,22,{panel:false,value:d.instant,min:0,max:20,step:20/16,ramp:'hot',smooth:3.5});
     if (finite(d.average)) {
         const p=x0+(leftWidth-18)*clamp(d.average/20,0,1);
         cv.line(p+18,consoY-3,p,consoY+25,3,light);
@@ -148,7 +148,9 @@ function draw(cv, t, G, d) {
         const valueWidth = text(number(value,decimals),vx,y+36,37);
         cv.text(' '+unit, vx+valueWidth, Y(y+36), 20, dim);
         max = finite(max) && max > 0 ? max : 1;
-        [value,finite(value) ? peak : null].forEach((reading,i) => {
+        // Keep the numerical value and peak real; interpolate only the live pedal/load bar.
+        const live = index >= 3 ? G.smooth('dashboard-metric-'+index, value, 3.5) : value;
+        [live,finite(value) ? peak : null].forEach((reading,i) => {
             const yTrack=Y(y+48+i*12);
             segmentedTrack(bx,yTrack,bw,6,reading,max,i===1);
         });

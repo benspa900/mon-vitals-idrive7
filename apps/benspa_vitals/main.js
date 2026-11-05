@@ -548,7 +548,7 @@ mgu.run({
                         fuelTry.oil = now; const v = await rd.value('oil', dme.oil);
                         if (v !== null && Date.now() - oilCarT > 15000) put('oil', v);
                     }
-                    if (due('rate', fuelFail.rate >= 3 ? 30000 : 2500, now)) {
+                    if (due('rate', fuelFail.rate >= 3 ? 30000 : 1000, now)) {
                         fuelTry.rate = now;
                         const got = await sources.readFuel(link, rd, dmeId, fuelRateCandidates);
                         if (got.value === null) { fuelFail.rate = (fuelFail.rate || 0) + 1; status('consommation', 'aucune source valide'); }
@@ -574,7 +574,7 @@ mgu.run({
                         else status('boite', 'aucune source valide reconnue');
                     }
                     for (const [key, list] of [['pedal', sources.pedalCandidates(dmeId)], ['engineLoad', sources.ENGINE_LOAD]]) {
-                        if (!due(key, fuelFail[key] >= 3 ? 30000 : 2500, now)) continue;
+                        if (!due(key, fuelFail[key] >= 3 ? 30000 : 1000, now)) continue;
                         fuelTry[key] = now;
                         const v = await rd.value(key, list);
                         if (v === null) fuelFail[key] = (fuelFail[key] || 0) + 1;
@@ -583,9 +583,9 @@ mgu.run({
                 }
             } catch (e) { log.warn('read-only dashboard data: ' + e); }
             fuelBusy = false;
-            fuelTimer = setTimeout(pollFuel, 1000);
+            fuelTimer = setTimeout(pollFuel, 500);
         }
-        fuelTimer = setTimeout(pollFuel, 1000);
+        fuelTimer = setTimeout(pollFuel, 500);
         /** Page opened: don't wait for the slow timer. */
         const kickFuel = () => { if (!fuelBusy && Date.now() - fuelLast > 600) { clearTimeout(fuelTimer); fuelTimer = setTimeout(pollFuel, 0); } };
         /** Why a fuel value is missing, for its tile. */

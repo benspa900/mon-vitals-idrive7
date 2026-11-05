@@ -10,7 +10,7 @@ const cv={
 };
 const t={text:'white',dim:'gray',warn:'yellow',hotRamp:['#1f5fd0','#3d9bff','#3d9bff','#c04cdc','#ef2b2d']};
 const {ramp,mix}=require('../kit/runtime/canvas');
-const G={pageBottom:()=>512,ramp,mix,segBar(cv,t,x,y,w,h,spec) {bars.push({theme:t,x,y,w,h,spec});}};
+const G={pageBottom:()=>512,ramp,mix,smooth:(key,value)=>value,segBar(cv,t,x,y,w,h,spec) {bars.push({theme:t,x,y,w,h,spec});}};
 const d={rpm:null,rpmPeak:5000,speed:null,speedUnit:'km/h',gear:null,power:null,powerUnit:'kW',powerMax:215,torque:null,torqueUnit:'Nm',torqueMax:900,boost:null,boostUnit:'bar',boostMax:2.5,tempUnit:'°C',peaks:{},pedal:null,engineLoad:null,warmGuideEnabled:true,warmGuide:null};
 const Y=n=>Math.round(18+n*(512-34)/465);
 dashboard.draw(cv,t,G,d);
@@ -32,6 +32,7 @@ assert.ok(new Set(rpmColors).size>8,'RPM bands use a continuous colour ramp');
 assert.strictEqual(bars.length,4);
 assert.strictEqual(bars[0].spec.value,8,'Consumption uses the actual value');
 assert.strictEqual(bars[0].spec.ramp,'hot','Consumption uses M Vitals colours');
+assert.strictEqual(bars[0].spec.smooth,3.5,'Consumption bar uses gradual motion');
 assert.strictEqual(bars[0].spec.step,20/16,'Consumption uses 16 segments');
 assert.ok(lines.some(x=>x[5]==='#81c4ff' && x[1]===Y(97)-3),'Average is a distinct consumption marker');
 assert.ok(bars.slice(1).every(b=>b.spec.color==='#ff9c28' && b.theme.hang==='#ffd27a'),'Cold temperatures and peaks remain orange');
@@ -53,4 +54,30 @@ bars.length=0;
 Object.assign(d,{tempUnit:'°C',oil:80,oilWarm:80,gearbox:60,gearboxWarm:60,coolant:80,coolantWarm:80});
 dashboard.draw(cv,t,G,d);
 assert.ok(bars.slice(1).every(b=>b.spec.color==='#1f5fd0'),'At threshold gauges return to blue');
-console.log('Dashboard: left gauges, right double tracks, temperatures and missing data OK');
+// Exercise the real time-based smoother through the dashboard: numbers and maximum stay raw,
+// the live bar moves between readings, and missing data removes it immediately.
+const realSmooth=require('../kit/runtime/gauges').smooth, realNow=Date.now;
+try {
+    let clock=100000;
+    Date.now=()=>clock;
+    G.smooth=realSmooth;
+    Object.assign(d,{rpm:null,pedal:0,engineLoad:0,peaks:{pedal:100,engineLoad:100}});
+    dashboard.draw(cv,t,G,d);
+    seen.length=quads.length=0;
+    clock+=16;
+    Object.assign(d,{pedal:100,engineLoad:100});
+    dashboard.draw(cv,t,G,d);
+    const trackY=Y(28+3*92+48);
+    const liveFill=()=>quads.filter(q=>q.pts[0][0]>=1137 && q.pts[0][1]===trackY && q.color!=='#293b48')
+        .reduce((sum,q)=>sum+q.pts[1][0]-q.pts[0][0],0);
+    const startFill=liveFill();
+    assert.ok(startFill>0 && startFill<100,'Pedal bar interpolates instead of jumping to 100%');
+    assert.ok(seen.some(x=>x.s==='100'),'Displayed value remains the latest measurement');
+    for(let i=0;i<100;i++) { clock+=16; quads.length=0; dashboard.draw(cv,t,G,d); }
+    assert.ok(liveFill()>startFill+200,'Pedal bar continues toward the actual reading');
+    clock+=16; quads.length=0;
+    Object.assign(d,{pedal:null,engineLoad:null});
+    dashboard.draw(cv,t,G,d);
+    assert.strictEqual(liveFill(),0,'Missing pedal data clears the smoothed bar immediately');
+} finally { Date.now=realNow; }
+console.log('Dashboard: live values, smooth bars, maximums and missing data OK');

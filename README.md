@@ -24,7 +24,7 @@ Régime, vitesse et rapport au centre, entourés de jauges doubles de régime et
 4. Le Store construit l'application depuis les sources avec le SDK de la voiture. Si nécessaire, il demande ou installe ses dépendances déclarées : moteur graphique compatible, composant de commandes et Python du Store. Les versions du Store et ses dépendances peuvent influencer la procédure.
 5. Ouvrir l'application puis vérifier à l'arrêt les unités, les réglages et les valeurs par rapport aux indications BMW. Une donnée non prise en charge reste `--`.
 
-Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.9.3 améliore la fluidité des jauges de consommation, d’accélérateur et de charge moteur. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
+Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.9.4 rend la zone de chauffe dynamique plus visible sur les jauges de régime. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
 
 ## Émulateur sur Mac
 

@@ -89,7 +89,7 @@ function draw(cv, t, G, d) {
         band(side,-18,15,0,1,'#131d29');
         const redRpm = finite(d.redline) && d.redline > 0 ? Math.min(d.redline,rm) : rm*0.9;
         const hasGuide = d.warmGuideEnabled && finite(d.warmGuide);
-        if (hasGuide && d.warmGuide < redRpm) band(side,-18,15,d.warmGuide/rm,redRpm/rm,'#604417');
+        if (hasGuide && d.warmGuide < redRpm) band(side,-18,15,d.warmGuide/rm,redRpm/rm,'#98510f');
         stroke(side,22,0,1,'#c8d4de',2);
         stroke(side,-22,0,1,'#6b8093',2);
         if (finite(d.rpm)) {
@@ -97,15 +97,24 @@ function draw(cv, t, G, d) {
             const end=clamp(d.rpm/rm,0,1), resolution=64;
             for (let i=0;i<resolution && i/resolution<end;i++) {
                 const from=i/resolution, to=Math.min(end,(i+1)/resolution);
-                const color=G.ramp(t.hotRamp || t.ramp,clamp((from+to)*0.5*rm/redRpm,0,1));
-                // Slight overlap prevents antialiasing seams between adjacent colours.
-                const edge=Math.min(end,to+0.003);
-                band(side,-16,7,from,edge,color);
-                band(side,-16,-9,from,edge,G.mix(color,'#ffffff',0.4));
+                const guide=hasGuide && d.warmGuide<redRpm ? clamp(d.warmGuide/rm,0,1) : 1;
+                const breaks=from<guide && to>guide ? [from,guide,to] : [from,to];
+                for (let j=1;j<breaks.length;j++) {
+                    const a=breaks[j-1], b=breaks[j], warmWarning=a>=guide;
+                    const color=warmWarning ? '#ff9e22' : G.ramp(t.hotRamp || t.ramp,clamp((a+b)*0.5*rm/redRpm,0,1));
+                    // Overlap adjoining fills but never across the warm-up boundary.
+                    const edge=Math.min(end,b+0.003,warmWarning ? 1 : guide);
+                    band(side,-16,7,a,edge,color);
+                    band(side,-16,-9,a,edge,G.mix(color,'#ffffff',0.4));
+                }
             }
         }
         if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,12,0,d.rpmPeak/rm,light,3);
-        if (hasGuide && d.warmGuide < redRpm) stroke(side,18,d.warmGuide/rm,redRpm/rm,'#ffb020',3);
+        if (hasGuide && d.warmGuide < redRpm) {
+            stroke(side,18,d.warmGuide/rm,redRpm/rm,'#ffb020',3);
+            const p=point(side,0,clamp(d.warmGuide/rm,0,1));
+            cv.line(p[0]-side*18,p[1],p[0]+side*18,p[1],4,'#ffd27a');
+        }
         const redFrom = finite(d.redline) && d.redline > 0 ? clamp(d.redline/rm,0,1) : 0.9;
         band(side,-17,12,redFrom,1,'#581522');
         stroke(side,3,redFrom,1,red,6);

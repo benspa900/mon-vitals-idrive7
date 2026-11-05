@@ -27,6 +27,8 @@ const rpm=seen.find(x=>x.s==='3000'),gear=seen.find(x=>x.s==='S3'),speed=seen.fi
 assert.ok(gear.y<speed.y && speed.y<rpm.y && gear.size>rpm.size && gear.size>speed.size);
 assert.ok(gear.font==='gear' && speed.font==='light' && rpm.font==='light');
 assert.ok(seen.some(x=>x.s==='Rev Limit') && lines.some(x=>x[5]==='#ffb020'));
+assert.strictEqual(lines.filter(x=>x[5]==='#ffd27a').length,2,'A visible warm-up boundary appears on both RPM gauges');
+assert.ok(quads.some(q=>q.color==='#98510f'),'Warm-up zone is visible in the RPM gauge');
 const rpmColors=quads.filter(q=>q.pts[0][0]<1137 && q.pts[0][0]>400 && Array.isArray(q.color)).map(q=>q.color.join(','));
 assert.ok(new Set(rpmColors).size>8,'RPM bands use a continuous colour ramp');
 assert.strictEqual(bars.length,4);
@@ -54,6 +56,19 @@ bars.length=0;
 Object.assign(d,{tempUnit:'°C',oil:80,oilWarm:80,gearbox:60,gearboxWarm:60,coolant:80,coolantWarm:80});
 dashboard.draw(cv,t,G,d);
 assert.ok(bars.slice(1).every(b=>b.spec.color==='#1f5fd0'),'At threshold gauges return to blue');
+// The highlighted boundary moves up as oil warms and disappears when unavailable or fully warm.
+function guideMark(guide) {
+    lines.length=quads.length=0; d.warmGuide=guide; d.rpm=6500;
+    dashboard.draw(cv,t,G,d);
+    return lines.filter(x=>x[5]==='#ffd27a');
+}
+const coldMark=guideMark(3500), warmerMark=guideMark(5300);
+assert.strictEqual(coldMark.length,2);
+assert.strictEqual(warmerMark.length,2);
+assert.ok(warmerMark[0][1]<coldMark[0][1],'Warm boundary moves upward with temperature');
+assert.ok(quads.some(q=>q.color==='#ff9e22'),'Current RPM is orange in the warm-up zone');
+assert.strictEqual(guideMark(7000).length,0,'No warm-up boundary at the configured redline');
+assert.strictEqual(guideMark(null).length,0,'No fabricated boundary without oil data');
 // Exercise the real time-based smoother through the dashboard: numbers and maximum stay raw,
 // the live bar moves between readings, and missing data removes it immediately.
 const realSmooth=require('../kit/runtime/gauges').smooth, realNow=Date.now;

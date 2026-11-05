@@ -16,25 +16,14 @@ function draw(cv, t, G, d) {
     label('INSTANT.', x0, 61, 'left', 18); text(number(d.instant, 1), 115, 63, 32);
     label('MOY.', 245, 61, 'left', 18); text(number(d.average, 1), 305, 63, 32);
     label('L/100 KM', x0, 85, 'left', 16);
-    function thinTrack(y, value, color) {
+    function thinTrack(y, value, color, min, max) {
         cv.fillRect(x0, Y(y), x1-x0, 5, muted);
-        if (finite(value)) cv.fillRect(x0, Y(y), (x1-x0)*clamp(value/20,0,1), 5, color);
+        min = finite(min) ? min : 0; max = finite(max) && max > min ? max : 20;
+        if (finite(value)) cv.fillRect(x0, Y(y), (x1-x0)*clamp((value-min)/(max-min),0,1), 5, color);
     }
     thinTrack(97, d.instant, blue); thinTrack(109, d.average, light);
     label('INSTANT.', x0, 133, 'left', 16); label('MOYENNE', 245, 133, 'left', 16);
     cv.fillRect(x0, Y(137), 35, 3, blue); cv.fillRect(245, Y(137), 35, 3, light);
-    // Friction circle is only populated if both measured axes are available.
-    label('FORCES G', x0, 186);
-    const gx = 125, gy = Y(325), gr = Math.min(74, (bottom-26)*0.16);
-    [1, 0.66, 0.33].forEach(k => cv.arc(gx, gy, gr*k-1, gr*k, 0, 360, muted));
-    cv.line(gx-gr,gy,gx+gr,gy,1,dim); cv.line(gx,gy-gr,gx,gy+gr,1,dim);
-    if (finite(d.gLat) && finite(d.gLong)) {
-        const a = clamp(d.gLat/1.5,-1,1), b = clamp(d.gLong/1.5,-1,1);
-        const norm = Math.max(1, Math.sqrt(a*a+b*b));
-        cv.circle(gx+a/norm*gr, gy-b/norm*gr, 6, light);
-    }
-    text(number(d.gLat,2)+' G', 47, 445, 20); text(number(d.gLong,2)+' G', 147, 445, 20);
-    cv.line(240, Y(178), 240, Y(460), 1, muted);
     // Compact line icons help distinguish the three temperature values.
     function tempIcon(i, x, y) {
         const line = (a,b,c,d) => cv.line(x+a,y+b,x+c,y+d,1.8,white);
@@ -51,11 +40,22 @@ function draw(cv, t, G, d) {
             line(3,28,9,26); line(9,26,15,28); line(15,28,21,26); line(21,26,27,28);
         }
     }
-    [['HUILE MOTEUR',d.oil],['HUILE BOITE',d.gearbox],['REFROID.',d.coolant]].forEach((row,i) => {
-        const y = 200+i*95; tempIcon(i, 254, Y(y+5)); label(row[0], 294, y, 'left', 16);
-        text(number(row[1],0)+' '+d.tempUnit, 294, y+37, 33);
-        if (i < 2) cv.line(254,Y(y+51),448,Y(y+51),1,muted);
+    const scale = d.tempUnit === '°F' ? v => v*9/5+32 : v => v;
+    const temperatures = [
+        ['HUILE MOTEUR',d.oil,d.oilPeak,170],
+        ['HUILE BOITE',d.gearbox,d.gearboxPeak,150],
+        ['REFROIDISSEMENT',d.coolant,d.coolantPeak,160],
+    ];
+    temperatures.forEach((row,i) => {
+        const y = 184+i*105;
+        tempIcon(i, x0, Y(y)-26);
+        label(row[0], x0+41, y, 'left', 19);
+        cv.text(number(row[1],0)+' '+d.tempUnit, x1, Y(y+2), 33, finite(row[1]) ? white : dim, {font:'num',align:'right'});
+        thinTrack(y+20, row[1], blue, scale(0), scale(row[3]));
+        thinTrack(y+32, finite(row[1]) ? row[2] : null, light, scale(0), scale(row[3]));
     });
+    label('ACTUEL', x0, 451, 'left', 16); label('MAX RECENT', 245, 451, 'left', 16);
+    cv.fillRect(x0, Y(455), 35, 3, blue); cv.fillRect(245, Y(455), 35, 3, light);
     // A bent path: the two parallel strokes are current and held peak RPM respectively.
     const rm = finite(d.rpmMax) && d.rpmMax > 0 ? d.rpmMax : 8000;
     function point(side, offset, f) {

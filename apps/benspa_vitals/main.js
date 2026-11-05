@@ -963,6 +963,8 @@ mgu.run({
             const instant = isDemo ? 8.4 : (fuelRateAt && now - fuelRateAt < 8000 ? values.instantFuel(live.fuelRate, d.speed) : null);
             const pw = power(d); const pk = isDemo ? demoPeak : peak;
             raise(pk, 'power', pw.kw); ['rpm', 'boost', 'torque', 'pedal', 'engineLoad'].forEach(k => raise(pk, k, d[k]));
+            const gearbox = G.isNum(d.gearbox) ? d.gearbox : (!isDemo && live.gearDiagnosticAt && now - live.gearDiagnosticAt < 30000 ? live.gearDiagnostic : null);
+            raise(pk, 'displayOil', d.oil); raise(pk, 'displayCoolant', d.coolant); raise(pk, 'displayGearbox', gearbox);
             dashboard.draw(cv, t, G, {
                 rpm: d.rpm, rpmMax: engine.scaleMax(), redline: engine.redline(),
                 rpmPeak: settings.get('peaks') ? pk.rpm : null,
@@ -970,8 +972,11 @@ mgu.run({
                 gear: gearText(d), power: PW(pw.kw), powerUnit: pwU(), powerMax: Math.max(PW(settings.get('maxPower')), G.isNum(PW(pw.kw)) ? Math.ceil(PW(pw.kw) / 25) * 25 : 0),
                 powerEstimated: pw.calc, torque: TQ(d.torque), torqueUnit: tqU(), torqueMax: tqScale().max,
                 boost: P(d.boost), boostUnit: settings.get('pressUnit'), boostMax: (BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'])[settings.get('pressUnit') === 'psi' ? 1 : 0],
-                coolant: T(d.coolant), oil: T(d.oil), gearbox: T(G.isNum(d.gearbox) ? d.gearbox : (live.gearDiagnosticAt && now - live.gearDiagnosticAt < 30000 ? live.gearDiagnostic : null)), tempUnit: tU(),
-                instant: instant, average: avg, gLat: d.gLat, gLong: d.gLong,
+                coolant: T(d.coolant), oil: T(d.oil), gearbox: T(gearbox), tempUnit: tU(),
+                oilPeak: settings.get('peaks') ? T(pk.displayOil) : null,
+                coolantPeak: settings.get('peaks') ? T(pk.displayCoolant) : null,
+                gearboxPeak: settings.get('peaks') ? T(pk.displayGearbox) : null,
+                instant: instant, average: avg,
                 pedal: d.pedal, engineLoad: d.engineLoad,
                 peaks: settings.get('peaks') ? { power: PW(pk.power), torque: TQ(pk.torque), boost: P(pk.boost), pedal: pk.pedal, engineLoad: pk.engineLoad } : {}, demo: isDemo,
             });

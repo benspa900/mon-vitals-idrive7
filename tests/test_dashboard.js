@@ -3,7 +3,7 @@ const assert = require('assert');
 const dashboard = require('../apps/benspa_vitals/dashboard');
 const seen = [], lines = [], fills = [], dots = [];
 const cv = {
-    text(s,x,y,size,color,opts) { seen.push({s,x,y}); return String(s).length * size / 2; },
+    text(s,x,y,size,color,opts) { seen.push({s,x,y,size}); return String(s).length * size / 2; },
     textWidth(s,n) { return String(s).length*n/2; },
     fillRect(...args) { fills.push(args); }, line(...args) { lines.push(args); },
     quad() {}, arc() {}, circle(...args) { dots.push(args); }
@@ -21,6 +21,8 @@ Object.assign(d, {demo:true, speed:96, gear:{letter:'S',num:'3',est:false}, rpm:
 dashboard.draw(cv, t, G, d);
 assert.ok(seen.some(x => x.s === 'DEMO'));
 assert.ok(seen.some(x => x.s === 'S3'));
+const rpm = seen.find(x => x.s === '3000'), gear = seen.find(x => x.s === 'S3'), speed = seen.find(x => x.s === '96');
+assert.ok(rpm.y < gear.y && gear.y < speed.y && gear.size > rpm.size && gear.size > speed.size, 'RPM above, large gear in centre, speed below');
 assert.ok(seen.some(x => x.s === 'ACCELERATEUR') && seen.some(x => x.s === 'CHARGE MOTEUR'));
 assert.ok(lines.some(x => x[5] === '#69d4ff'), 'Held RPM uses its own stroke');
 assert.ok(fills.some(x => x[4] === '#0872e9') && fills.some(x => x[4] === '#69d4ff'), 'Consumption uses independent tracks');

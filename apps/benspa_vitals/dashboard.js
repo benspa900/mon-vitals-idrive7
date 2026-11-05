@@ -60,10 +60,10 @@ function draw(cv, t, G, d) {
         [0,11].forEach(off => stroke(side,off,redFrom,1,red,3));
     });
     label('REGIME MOTEUR', c, 44, 'center', 21);
-    text(number(d.rpm,0), c, 116, 68, 'center'); label('tr/min', c, 144, 'center', 21);
-    text(number(d.speed,0), c, 244, 78, 'center'); label(d.speedUnit || 'km/h', c, 273, 'center', 21);
+    text(number(d.rpm,0), c, 116, 58, 'center'); label('tr/min', c, 144, 'center', 21);
     const gear = d.gear ? d.gear.letter + d.gear.num : '--';
-    text(gear, c, 385, 75, 'center'); label(d.gear && d.gear.est ? 'RAPPORT EST.' : 'RAPPORT', c, 414, 'center', 21);
+    text(gear, c, 257, 100, 'center'); label(d.gear && d.gear.est ? 'RAPPORT EST.' : 'RAPPORT', c, 286, 'center', 21);
+    text(number(d.speed,0), c, 385, 58, 'center'); label(d.speedUnit || 'km/h', c, 414, 'center', 21);
     // Five angled M-style gauges. The numbers retain their actual values above the chosen scale.
     function metric(title, value, unit, max, peak, index, decimals) {
         const y=28+index*92, vx=1137, bx=1137, bw=423, by=Y(y+48), bh=12, sl=10;

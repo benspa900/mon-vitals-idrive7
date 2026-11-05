@@ -385,6 +385,7 @@ mgu.run({
             Object.keys(MOVE).forEach((k) => { if (!trusted(k)) v[k] = null; });
             const ttl = { rpm: 5000, speed: 5000, torque: 5000, powerPct: 5000, powerCalc: 5000,
                 boostFes: 15000, boostDme: 15000, coolant: 30000, oil: 45000, gearbox: 45000,
+                gLat: 5000, gLong: 5000, pedal: 10000, engineLoad: 10000,
                 pFL: 60000, pFR: 60000, pRL: 60000, pRR: 60000,
                 ptFL: 60000, ptFR: 60000, ptRL: 60000, ptRR: 60000 };
             Object.keys(ttl).forEach(k => { if (stamps[k] && Date.now() - stamps[k] > ttl[k]) v[k] = null; });
@@ -571,6 +572,13 @@ mgu.run({
                         }
                         if (temp !== null) { live.gearDiagnostic = temp; live.gearDiagnosticAt = Date.now(); status('boite', from); }
                         else status('boite', 'aucune source valide reconnue');
+                    }
+                    for (const [key, list] of [['pedal', sources.pedalCandidates(dmeId)], ['engineLoad', sources.ENGINE_LOAD]]) {
+                        if (!due(key, fuelFail[key] >= 3 ? 30000 : 2500, now)) continue;
+                        fuelTry[key] = now;
+                        const v = await rd.value(key, list);
+                        if (v === null) fuelFail[key] = (fuelFail[key] || 0) + 1;
+                        else { fuelFail[key] = 0; put(key, v); }
                     }
                 }
             } catch (e) { log.warn('read-only dashboard data: ' + e); }
@@ -954,16 +962,18 @@ mgu.run({
             const avg = isDemo ? 7.1 : (d.avgFuelAt && now - d.avgFuelAt < 30000 ? d.avgFuel : null);
             const instant = isDemo ? 8.4 : (fuelRateAt && now - fuelRateAt < 8000 ? values.instantFuel(live.fuelRate, d.speed) : null);
             const pw = power(d); const pk = isDemo ? demoPeak : peak;
-            raise(pk, 'power', pw.kw); ['rpm', 'boost', 'torque'].forEach(k => raise(pk, k, d[k]));
+            raise(pk, 'power', pw.kw); ['rpm', 'boost', 'torque', 'pedal', 'engineLoad'].forEach(k => raise(pk, k, d[k]));
             dashboard.draw(cv, t, G, {
                 rpm: d.rpm, rpmMax: engine.scaleMax(), redline: engine.redline(),
+                rpmPeak: settings.get('peaks') ? pk.rpm : null,
                 speed: V(G.hold('speed', d.speed, 1000 / settings.get('speedRate'))), speedUnit: settings.get('speedUnit') === 'mph' ? 'mph' : 'km/h',
                 gear: gearText(d), power: PW(pw.kw), powerUnit: pwU(), powerMax: Math.max(PW(settings.get('maxPower')), G.isNum(PW(pw.kw)) ? Math.ceil(PW(pw.kw) / 25) * 25 : 0),
                 powerEstimated: pw.calc, torque: TQ(d.torque), torqueUnit: tqU(), torqueMax: tqScale().max,
                 boost: P(d.boost), boostUnit: settings.get('pressUnit'), boostMax: (BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'])[settings.get('pressUnit') === 'psi' ? 1 : 0],
                 coolant: T(d.coolant), oil: T(d.oil), gearbox: T(G.isNum(d.gearbox) ? d.gearbox : (live.gearDiagnosticAt && now - live.gearDiagnosticAt < 30000 ? live.gearDiagnostic : null)), tempUnit: tU(),
-                instant: instant, average: avg, pressures: ['FL','FR','RL','RR'].map(k => ({ actual: Pt(d['p'+k]), target: Pt(d['pt'+k]) })),
-                pressureUnit: settings.get('pressUnit'), peaks: settings.get('peaks') ? { power: PW(pk.power), torque: TQ(pk.torque), boost: P(pk.boost) } : {}, demo: isDemo,
+                instant: instant, average: avg, gLat: d.gLat, gLong: d.gLong,
+                pedal: d.pedal, engineLoad: d.engineLoad,
+                peaks: settings.get('peaks') ? { power: PW(pk.power), torque: TQ(pk.torque), boost: P(pk.boost), pedal: pk.pedal, engineLoad: pk.engineLoad } : {}, demo: isDemo,
             });
             if (!render.n) { render.n = 1; log.info('first frame drawn'); }
             await ui.image('MAIN_GFX', cv);

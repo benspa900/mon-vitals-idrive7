@@ -3,6 +3,18 @@
 // A response from another controller must never be decoded with these layouts.
 const DME8 = new Set(['0F2422','0F2424','0F2426','0F2427','0F2428','0F2429','0F242A','0F242C','0F242E','0F2460','0F25A0','0F25A2','0F26B4','0F26B8','0F26BC','0F26E0','0F26E4','0F26E8','0F2930']);
 const EGS = new Set(['0F25D0','0F21E0']);
+// Standard relative pedal and calculated load, with UDS equivalents.
+const PEDAL = [
+    { obd:'5A', bytes:1, factor:100/255, min:0, max:100, timeoutMs:1200 },
+    { did:'F45A', bytes:1, factor:100/255, min:0, max:100, timeoutMs:1200 },
+];
+const ENGINE_LOAD = [
+    { obd:'04', bytes:1, factor:100/255, min:0, max:100, timeoutMs:1200 },
+    { did:'F404', bytes:1, factor:100/255, min:0, max:100, timeoutMs:1200 },
+];
+function pedalCandidates(id) {
+    return DME8.has(id) ? [{ did:'5814', bytes:2, signed:true, factor:0.01220703, min:0, max:100, timeoutMs:1200 }].concat(PEDAL) : PEDAL;
+}
 function payload(b, a, c, length) {
     return Array.isArray(b) && b.length === 3 + length && b[0] === 0x62 && b[1] === a && b[2] === c ? b.slice(3) : null;
 }
@@ -44,4 +56,4 @@ async function readEgsGearbox(link, egsId) {
     if (!EGS.has(egsId)) return null;
     return temperature(await link.read(0x18, 0x6000, 1500), 0x6000, -40, 1);
 }
-module.exports = { DME8, EGS, identification, fuel5656, temperature, readFuel, readDmeGearbox, readEgsGearbox };
+module.exports = { DME8, EGS, PEDAL, ENGINE_LOAD, pedalCandidates, identification, fuel5656, temperature, readFuel, readDmeGearbox, readEgsGearbox };

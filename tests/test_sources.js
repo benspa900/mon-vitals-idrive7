@@ -36,3 +36,23 @@ console.log('Verified controller identifiers, fuel conversion and gearbox decode
     assert.strictEqual(asked.length, 0, 'Unknown controllers never receive vendor-specific reads');
     console.log('Fuel fallback and gearbox controller gates OK');
 })().catch(e => { console.error(e); process.exit(1); });
+
+(async () => {
+    const { DidReader } = require('../kit/runtime/dids');
+    const calls = [];
+    const link = { async physical(ecu, sid, data) {
+        calls.push([sid, ...data]);
+        if (sid === 1 && data[0] === 0x5a) return [0x41, 0x5a, 128];
+        if (sid === 1 && data[0] === 0x04) return [0x41, 0x04, 255];
+        if (sid === 0x22 && data[0] === 0x58 && data[1] === 0x14) return [0x62, 0x58, 0x14, 0x10, 0x00];
+        return null;
+    }};
+    const reader = new DidReader(link, {ecu:0x12});
+    const relative = await reader.value('pedal', s.pedalCandidates('UNKNOWN'));
+    assert.ok(Math.abs(relative - 128 * 100 / 255) < 1e-8);
+    assert.strictEqual(await reader.value('load', s.ENGINE_LOAD), 100);
+    assert.ok(!calls.some(c => c[0] === 0x22 && c[1] === 0x58), 'unknown DME does not receive 5814');
+    const normalized = await reader.value('pedalDME', s.pedalCandidates('0F26E8'));
+    assert.ok(Math.abs(normalized - 4096 * 0.01220703) < 1e-8);
+    console.log('Pedal and calculated load: actual reader decoding and ECU gate OK');
+})().catch(e => { console.error(e); process.exit(1); });

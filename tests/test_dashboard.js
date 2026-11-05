@@ -14,7 +14,7 @@ const G = { pageBottom: () => 512, bar(cv,t,x,y,w,h,spec) { bars.push(spec); } }
 const d = { rpm:null, rpmPeak:5000, speed:null, speedUnit:'km/h', gear:null, power:null, powerUnit:'kW', powerMax:215, torque:null, torqueUnit:'Nm', torqueMax:900, boost:null, boostUnit:'bar', boostMax:2.5, tempUnit:'C', peaks:{}, pedal:null, engineLoad:null };
 dashboard.draw(cv, t, G, d);
 assert.ok(seen.some(x => x.s === '--'), 'Unavailable readings are explicit');
-assert.strictEqual(dots.length, 0, 'No fabricated g-force dot');
+assert.strictEqual(dots.filter(x => x[3] === '#69d4ff').length, 0, 'No fabricated g-force dot');
 assert.strictEqual(lines.filter(x => x[5] === '#69d4ff').length, 0, 'A stale RPM peak is not displayed without current RPM');
 assert.ok(!seen.some(x => x.s === 'DEMO'), 'Real mode must not claim demo');
 seen.length=0; lines.length=0; fills.length=0;
@@ -27,6 +27,6 @@ assert.ok(gear.y < speed.y && speed.y < rpm.y && gear.size > rpm.size && gear.si
 assert.ok(seen.some(x => x.s === 'ACCELERATEUR') && seen.some(x => x.s === 'CHARGE MOTEUR'));
 assert.ok(lines.some(x => x[5] === '#69d4ff'), 'Held RPM uses its own stroke');
 assert.ok(fills.some(x => x[4] === '#0872e9') && fills.some(x => x[4] === '#69d4ff'), 'Consumption uses independent tracks');
-assert.strictEqual(dots.length, 1, 'A measured g-force dot is rendered');
+assert.strictEqual(dots.filter(x => x[3] === '#69d4ff').length, 1, 'A measured g-force dot is rendered');
 assert.strictEqual(bars.length, 10, 'Five M Vitals bars per page');
 console.log('Dashboard: two RPM and consumption tracks, missing values and g-force OK');

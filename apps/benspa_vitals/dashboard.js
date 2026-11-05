@@ -35,10 +35,26 @@ function draw(cv, t, G, d) {
     }
     text(number(d.gLat,2)+' G', 47, 445, 20); text(number(d.gLong,2)+' G', 147, 445, 20);
     cv.line(240, Y(178), 240, Y(460), 1, muted);
-    [['HUILE MOTEUR',d.oil],['HUILE BOITE',d.gearbox],['REFROIDISSEMENT',d.coolant]].forEach((row,i) => {
-        const y = 200+i*95; label(row[0], 261, y, 'left', 17);
-        text(number(row[1],0)+' '+d.tempUnit, 261, y+37, 33);
-        if (i < 2) cv.line(261,Y(y+51),448,Y(y+51),1,muted);
+    // Compact line icons help distinguish the three temperature values.
+    function tempIcon(i, x, y) {
+        const line = (a,b,c,d) => cv.line(x+a,y+b,x+c,y+d,1.8,white);
+        if (i === 0) { // oil can
+            line(1,9,7,12); line(7,12,9,22); line(9,22,23,22); line(23,22,27,13);
+            line(27,13,31,11); line(31,11,32,14); line(7,12,23,12); line(11,9,18,9); line(14,6,14,9);
+            cv.circle(x+32,y+19,1.7,white);
+        } else if (i === 1) { // gearbox and oil
+            cv.arc(x+16,y+15,10,11,0,360,white);
+            for (let n=0;n<8;n++) { const a=n*Math.PI/4; line(16+10*Math.cos(a),15+10*Math.sin(a),16+14*Math.cos(a),15+14*Math.sin(a)); }
+            cv.arc(x+16,y+17,3,4,0,360,white);
+        } else { // thermometer over coolant waves
+            line(14,3,14,18); line(18,3,18,18); line(14,3,18,3); cv.arc(x+16,y+20,4,5,0,360,white);
+            line(3,28,9,26); line(9,26,15,28); line(15,28,21,26); line(21,26,27,28);
+        }
+    }
+    [['HUILE MOTEUR',d.oil],['HUILE BOITE',d.gearbox],['REFROID.',d.coolant]].forEach((row,i) => {
+        const y = 200+i*95; tempIcon(i, 254, Y(y+5)); label(row[0], 294, y, 'left', 16);
+        text(number(row[1],0)+' '+d.tempUnit, 294, y+37, 33);
+        if (i < 2) cv.line(254,Y(y+51),448,Y(y+51),1,muted);
     });
     // A bent path: the two parallel strokes are current and held peak RPM respectively.
     const rm = finite(d.rpmMax) && d.rpmMax > 0 ? d.rpmMax : 8000;
@@ -53,17 +69,35 @@ function draw(cv, t, G, d) {
         const vals = from < 0.5 && to > 0.5 ? [from,0.5,to] : [from,to];
         for (let i=1;i<vals.length;i++) { const a=point(side,offset,vals[i-1]), b=point(side,offset,vals[i]); cv.line(a[0],a[1],b[0],b[1],width,color); }
     }
+    // Filled polygon bands give the dial its broad, faceted shape with square ends.
+    function band(side, inner, outer, from, to, color) {
+        from=clamp(from,0,1); to=clamp(to,0,1); if (to<=from) return;
+        const vals=from<0.5 && to>0.5 ? [from,0.5,to] : [from,to];
+        for (let i=1;i<vals.length;i++) {
+            const a=vals[i-1], b=vals[i];
+            cv.quad([point(side,inner,a),point(side,outer,a),point(side,outer,b),point(side,inner,b)],color);
+        }
+    }
     [-1,1].forEach(side => {
-        // Faceted BMW-inspired band, with current and held-maximum tracks inside it.
-        stroke(side,0,0,1,'#202d3a',28);
-        stroke(side,15,0,1,'#a5b6c7',3);
-        stroke(side,-15,0,1,'#586b7c',2);
-        if (finite(d.rpm)) stroke(side,-5,0,d.rpm/rm,blue,6);
-        if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,5,0,d.rpmPeak/rm,light,4);
+        // Broad grey-silver surround and a blue face that follows the current RPM.
+        band(side,-22,22,0,1,'#384b5d');
+        band(side,-18,15,0,1,'#131d29');
+        stroke(side,22,0,1,'#c8d4de',2);
+        stroke(side,-22,0,1,'#6b8093',2);
+        if (finite(d.rpm)) {
+            band(side,-16,7,0,d.rpm/rm,blue);
+            band(side,-16,-9,0,d.rpm/rm,light);
+        }
+        if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,12,0,d.rpmPeak/rm,light,3);
         const redFrom = finite(d.redline) && d.redline > 0 ? clamp(d.redline/rm,0.6,1) : 0.9;
-        stroke(side,0,redFrom,1,red,7);
+        band(side,-17,12,redFrom,1,'#581522');
+        stroke(side,3,redFrom,1,red,6);
+        if (finite(d.rpm) && finite(d.rpmPeak)) {
+            const p=point(side,0,clamp(d.rpmPeak/rm,0,1));
+            cv.line(p[0]-side*18,p[1],p[0]+side*18,p[1],3,white);
+        }
         for (let rpm=0; rpm<=rm; rpm+=1000) {
-            const p=point(side,-17,rpm/rm);
+            const p=point(side,-24,rpm/rm);
             cv.line(p[0],p[1],p[0]-side*8,p[1],2,white);
             cv.text(String(rpm/1000),p[0]-side*14,p[1]+6,20,white,{font:'num',align:side<0?'left':'right'});
         }

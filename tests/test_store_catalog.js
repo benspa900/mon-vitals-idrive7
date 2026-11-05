@@ -11,6 +11,6 @@ sources.reader({ type:'file', path:root }, {}).catalog().then(c => {
     assert.strictEqual(app.uninstallable, true);
     assert.deepStrictEqual(app.mguHmi, ['ID7']);
     assert.strictEqual(app.script.sdk, 'oap-sdk');
-    assert.strictEqual(app.script.output, 'dist/benspa_vitals@0.4.0.tgz');
+    assert.strictEqual(app.script.output, 'dist/benspa_vitals@0.4.1.tgz');
     console.log('MGU Store catalog: one ID7 app, build and SDK configuration OK');
 }).catch(e => { console.error(e); process.exit(1); });

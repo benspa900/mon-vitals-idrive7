@@ -22,7 +22,7 @@ Régime, vitesse et rapport au centre, entourés de jauges doubles de régime et
 4. Le Store construit l'application depuis les sources avec le SDK de la voiture. Si nécessaire, il demande ou installe ses dépendances déclarées : moteur graphique compatible, composant de commandes et Python du Store. Les versions du Store et ses dépendances peuvent influencer la procédure.
 5. Ouvrir l'application puis vérifier à l'arrêt les unités, les réglages et les valeurs par rapport aux indications BMW. Une donnée non prise en charge reste `--`.
 
-Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.4.0 reprend les jauges centrales inspirées du combiné M et les jauges de M Vitals à droite. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
+Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.4.1 affine les jauges centrales inspirées du combiné M ; les jauges de droite restent celles de M Vitals. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
 
 ## Émulateur sur Mac
 

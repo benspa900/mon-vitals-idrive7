@@ -6,6 +6,7 @@ Application personnelle de tableau de bord sur une seule page, issue du kit et d
 
 Régime, vitesse et rapport au centre, entourés de jauges doubles de régime et de maximum. À gauche : consommations instantanée et moyenne sur une jauge à repère, puis températures d'huile moteur, de boîte et de liquide de refroidissement avec leurs maxima. À droite : puissance (kW par défaut), couple, turbo, position relative de l'accélérateur et charge moteur calculée sur des doubles traits (valeur actuelle et maximum récent). Les données manquantes ou périmées sont affichées `--`.
 
+- Les traits fixes bleu clair, bleu et rouge sous les jauges horizontales sont décoratifs : ils ne correspondent ni à une mesure ni à un seuil d'alerte.
 - La puissance est calculée par défaut à partir du couple et du régime. Il est possible de choisir l'affichage sportif dans les réglages ; sa puissance maximale doit être réglée pour la voiture.
 - La consommation instantanée est calculée à partir du débit carburant et de la vitesse, uniquement à partir de 5 km/h. L'application essaie le débit documenté pour le calculateur DME8FF_R reconnu, puis les lectures OBD PID 5E et UDS F45E. Si aucun débit valide n'est disponible, elle affiche `--`. Ces lectures nécessitent validation sur la voiture.
 - La moyenne correspond à la moyenne **BC1 de l'ordinateur de bord BMW**, lue seulement si son unité est connue en L/100 km. Sa période dépend des réglages BMW. Ce choix peut être modifié ultérieurement.
@@ -24,7 +25,7 @@ Régime, vitesse et rapport au centre, entourés de jauges doubles de régime et
 4. Le Store construit l'application depuis les sources avec le SDK de la voiture. Si nécessaire, il demande ou installe ses dépendances déclarées : moteur graphique compatible, composant de commandes et Python du Store. Les versions du Store et ses dépendances peuvent influencer la procédure.
 5. Ouvrir l'application puis vérifier à l'arrêt les unités, les réglages et les valeurs par rapport aux indications BMW. Une donnée non prise en charge reste `--`.
 
-Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.9.4 rend la zone de chauffe dynamique plus visible sur les jauges de régime. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
+Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.9.5 ajoute des repères fixes aux couleurs M sous les jauges horizontales. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
 
 ## Émulateur sur Mac
 

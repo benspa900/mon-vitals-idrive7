@@ -11,6 +11,11 @@ function draw(cv, t, G, d) {
     const label = (s, x, y, align, size) => cv.text(s, x, Y(y), size || 22, dim, { font:'bold', align:align || 'left', spacing:1 });
     const text = (s, x, y, size, align, color) => cv.text(String(s), x, Y(y), size, color || white, { font:'num', align:align || 'left' });
     const x0 = 28, x1 = 450, c = 800;
+    // Fixed decorative scale: the M colours do not represent a measured value or a warning.
+    function mScale(x,y,w) {
+        const colors=['#81c4ff','#2365d0','#e7222e'], gap=4, part=(w-gap*2)/3;
+        colors.forEach((color,i)=>cv.fillRect(x+i*(part+gap),y,part,3,color));
+    }
     // Segmented M-style bar: current consumption, BC1 average as a separate marker.
     label('CONSOMMATION', x0, 29);
     label('INSTANT.', x0, 61, 'left', 18); text(number(d.instant, 1), 115, 63, 32);
@@ -18,6 +23,7 @@ function draw(cv, t, G, d) {
     label('L/100 KM', x0, 85, 'left', 16);
     const leftWidth = x1-x0, consoY=Y(97);
     G.segBar(cv,t,x0,consoY,leftWidth,22,{panel:false,value:d.instant,min:0,max:20,step:20/16,ramp:'hot',smooth:3.5});
+    mScale(x0,consoY+25,leftWidth-18);
     if (finite(d.average)) {
         const p=x0+(leftWidth-18)*clamp(d.average/20,0,1);
         cv.line(p+18,consoY-3,p,consoY+25,3,light);
@@ -59,6 +65,7 @@ function draw(cv, t, G, d) {
             panel:false,value:row[1],min,max,step:(max-min)/16,color:currentColor,
             peak:finite(row[1]) ? row[2] : null,hangTop:false,
         });
+        mScale(x0,Y(y+20)+25,leftWidth-18);
     });
     label('TRAIT CLAIR : MAX RECENT', x0, 451, 'left', 15);
     // A bent path: the two parallel strokes are current and held peak RPM respectively.
@@ -163,6 +170,7 @@ function draw(cv, t, G, d) {
             const yTrack=Y(y+48+i*12);
             segmentedTrack(bx,yTrack,bw,6,reading,max,i===1);
         });
+        mScale(bx,Y(y+60)+10,bw);
     }
     const p=d.peaks || {};
     metric(d.powerEstimated ? 'PUISSANCE CALC.' : 'PUISSANCE',d.power,d.powerUnit,d.powerMax,p.power,0,0);

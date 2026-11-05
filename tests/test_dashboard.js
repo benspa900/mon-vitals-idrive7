@@ -18,6 +18,7 @@ assert.ok(seen.some(x=>x.s==='--'));
 assert.ok(seen.some(x=>x.s==='HUILE --'));
 assert.ok(!lines.some(x=>x[5]==='#ffb020'),'No cold reference without oil');
 assert.strictEqual(bars.length,4,'Consumption and three temperature bars on the left');
+assert.strictEqual(fills.filter(f=>['#81c4ff','#2365d0','#e7222e'].includes(f[4])).length,27,'All nine gauges retain their fixed M-colour markers when readings are absent');
 assert.strictEqual(bars[2].spec.peak,null,'No stale gearbox maximum');
 assert.ok(!quads.some(q=>q.pts[0][0]>=1137 && q.color!=='#293b48'),'No invented right-hand value');
 seen.length=lines.length=fills.length=bars.length=quads.length=0;

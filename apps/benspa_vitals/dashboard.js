@@ -93,8 +93,16 @@ function draw(cv, t, G, d) {
         stroke(side,22,0,1,'#c8d4de',2);
         stroke(side,-22,0,1,'#6b8093',2);
         if (finite(d.rpm)) {
-            band(side,-16,7,0,d.rpm/rm,blue);
-            band(side,-16,-9,0,d.rpm/rm,light);
+            // The M Vitals colour ramp follows the existing solid, unsegmented shape.
+            const end=clamp(d.rpm/rm,0,1), resolution=64;
+            for (let i=0;i<resolution && i/resolution<end;i++) {
+                const from=i/resolution, to=Math.min(end,(i+1)/resolution);
+                const color=G.ramp(t.hotRamp || t.ramp,clamp((from+to)*0.5*rm/redRpm,0,1));
+                // Slight overlap prevents antialiasing seams between adjacent colours.
+                const edge=Math.min(end,to+0.003);
+                band(side,-16,7,from,edge,color);
+                band(side,-16,-9,from,edge,G.mix(color,'#ffffff',0.4));
+            }
         }
         if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,12,0,d.rpmPeak/rm,light,3);
         if (hasGuide && d.warmGuide < redRpm) stroke(side,18,d.warmGuide/rm,redRpm/rm,'#ffb020',3);

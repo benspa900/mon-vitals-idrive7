@@ -27,6 +27,8 @@ const rpm=seen.find(x=>x.s==='3000'),gear=seen.find(x=>x.s==='S3'),speed=seen.fi
 assert.ok(gear.y<speed.y && speed.y<rpm.y && gear.size>rpm.size && gear.size>speed.size);
 assert.ok(gear.font==='gear' && speed.font==='light' && rpm.font==='light');
 assert.ok(seen.some(x=>x.s==='Rev Limit') && lines.some(x=>x[5]==='#ffb020'));
+const rpmColors=quads.filter(q=>q.pts[0][0]<1137 && q.pts[0][0]>400 && Array.isArray(q.color)).map(q=>q.color.join(','));
+assert.ok(new Set(rpmColors).size>8,'RPM bands use a continuous colour ramp');
 assert.strictEqual(bars.length,4);
 assert.strictEqual(bars[0].spec.value,8,'Consumption uses the actual value');
 assert.strictEqual(bars[0].spec.ramp,'hot','Consumption uses M Vitals colours');

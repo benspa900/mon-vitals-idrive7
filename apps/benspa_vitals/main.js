@@ -26,6 +26,7 @@ const { GearGuess, selectionOf } = require('./kit/car');
 const { ReadOnlyDiag } = require('./kit/readonly-diag');
 const dashboard = require('./dashboard');
 const values = require('./values');
+const sources = require('./sources');
 const { DidReader } = require('./kit/dids');
 
 const W = 1600, H = 520;
@@ -505,28 +506,71 @@ mgu.run({
          * Fast (~2/s) for the values of the page on screen (Fuel & ignition, or boost on Engine when it
          * comes from the engine unit), all of them every 5 s otherwise so the history keeps filling.
          */
-        // Only read-only UDS/OBD requests. One request at a time, and no guessed value.
-        const fuelRateCandidates = [{ obd: '5E', bytes: 2, factor: 0.05, min: 0, max: 250 }];
-        let fuelRateAt = 0;
+        // Alternate sources are decoded only for identified, documented controllers.
+        const fuelRateCandidates = [
+            { obd: '5E', bytes: 2, factor: 0.05, min: 0, max: 250, timeoutMs: 1500 },
+            { did: 'F45E', bytes: 2, factor: 0.05, min: 0, max: 250, timeoutMs: 1500 },
+        ];
+        let fuelRateAt = 0, dmeId = null, egsId = null;
+        const lastWake = {};
+        const statuses = {};
+        const status = (key, message) => {
+            if (statuses[key] !== message) { statuses[key] = message; log.info(key + ': ' + message); }
+        };
+        const due = (key, interval, now) => !fuelTry[key] || now - fuelTry[key] >= interval;
+        async function identify(ecu, key, now) {
+            if (!due(key, 60000, now)) return null;
+            fuelTry[key] = now;
+            if (link.silent(ecu)) link.wake(ecu);
+            const id = sources.identification(await link.read(ecu, 0xF150, 1500));
+            status(key, id || 'aucune identification');
+            return id;
+        }
         async function pollFuel() {
             fuelBusy = true; fuelLast = Date.now();
             try {
                 if (link.available && ui.isVisible('MAIN')) {
                     const now = Date.now();
-                    if (boostFromDme() && (!fuelTry.boost || now - fuelTry.boost >= (fuelFail.boost >= 3 ? 30000 : 2000))) {
+                    [0x12, 0x18].forEach(ecu => {
+                        if (link.silent(ecu) && (!lastWake[ecu] || now - lastWake[ecu] >= 60000)) {
+                            lastWake[ecu] = now; link.wake(ecu);
+                        }
+                    });
+                    if (!dmeId) dmeId = await identify(0x12, 'DME', now);
+                    if (boostFromDme() && due('boost', fuelFail.boost >= 3 ? 30000 : 2000, now)) {
                         fuelTry.boost = now;
                         const v = await readBoost();
                         if (v === null) fuelFail.boost = (fuelFail.boost || 0) + 1;
                         else { fuelFail.boost = 0; put('boostDme', v); }
                     }
-                    if (now - oilCarT > 15000 && (dme.oil || []).length && (!fuelTry.oil || now - fuelTry.oil >= 30000)) {
+                    if (now - oilCarT > 15000 && (dme.oil || []).length && due('oil', 30000, now)) {
                         fuelTry.oil = now; const v = await rd.value('oil', dme.oil);
                         if (v !== null && Date.now() - oilCarT > 15000) put('oil', v);
                     }
-                    if (!fuelTry.rate || now - fuelTry.rate >= (fuelFail.rate >= 3 ? 30000 : 2000)) {
-                        fuelTry.rate = now; const v = await rd.value('fuelRate', fuelRateCandidates);
-                        if (v === null) { fuelFail.rate = (fuelFail.rate || 0) + 1; }
-                        else { fuelFail.rate = 0; live.fuelRate = v; fuelRateAt = Date.now(); }
+                    if (due('rate', fuelFail.rate >= 3 ? 30000 : 2500, now)) {
+                        fuelTry.rate = now;
+                        const got = await sources.readFuel(link, rd, dmeId, fuelRateCandidates);
+                        if (got.value === null) { fuelFail.rate = (fuelFail.rate || 0) + 1; status('consommation', 'aucune source valide'); }
+                        else { fuelFail.rate = 0; live.fuelRate = got.value; fuelRateAt = Date.now(); status('consommation', got.source); }
+                    }
+                    // The first source is the same BasicDataSet signal as M Vitals. When absent,
+                    // try the DME8 gearbox identifier, then the 8HP identifier on known EGS variants.
+                    if ((!trusted('gearbox') || !stamps.gearbox || now - stamps.gearbox > 45000) && due('gearTemp', 8000, now)) {
+                        fuelTry.gearTemp = now;
+                        let temp = null, from = '';
+                        if (sources.DME8.has(dmeId)) {
+                            temp = await sources.readDmeGearbox(link, dmeId);
+                            if (temp !== null) from = 'DME 4650';
+                        }
+                        if (temp === null) {
+                            if (!egsId) egsId = await identify(0x18, 'EGS', now);
+                            if (sources.EGS.has(egsId)) {
+                                temp = await sources.readEgsGearbox(link, egsId);
+                                if (temp !== null) from = 'EGS 6000';
+                            }
+                        }
+                        if (temp !== null) { live.gearDiagnostic = temp; live.gearDiagnosticAt = Date.now(); status('boite', from); }
+                        else status('boite', 'aucune source valide reconnue');
                     }
                 }
             } catch (e) { log.warn('read-only dashboard data: ' + e); }
@@ -917,7 +961,7 @@ mgu.run({
                 gear: gearText(d), power: PW(pw.kw), powerUnit: pwU(), powerMax: Math.max(PW(settings.get('maxPower')), G.isNum(PW(pw.kw)) ? Math.ceil(PW(pw.kw) / 25) * 25 : 0),
                 powerEstimated: pw.calc, torque: TQ(d.torque), torqueUnit: tqU(), torqueMax: tqScale().max,
                 boost: P(d.boost), boostUnit: settings.get('pressUnit'), boostMax: (BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'])[settings.get('pressUnit') === 'psi' ? 1 : 0],
-                coolant: T(d.coolant), oil: T(d.oil), gearbox: T(d.gearbox), tempUnit: tU(),
+                coolant: T(d.coolant), oil: T(d.oil), gearbox: T(G.isNum(d.gearbox) ? d.gearbox : (live.gearDiagnosticAt && now - live.gearDiagnosticAt < 30000 ? live.gearDiagnostic : null)), tempUnit: tU(),
                 instant: instant, average: avg, pressures: ['FL','FR','RL','RR'].map(k => ({ actual: Pt(d['p'+k]), target: Pt(d['pt'+k]) })),
                 pressureUnit: settings.get('pressUnit'), peaks: settings.get('peaks') ? { power: PW(pk.power), torque: TQ(pk.torque), boost: P(pk.boost) } : {}, demo: isDemo,
             });

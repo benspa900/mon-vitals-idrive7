@@ -1,0 +1,38 @@
+'use strict';
+const assert = require('assert');
+const s = require('../apps/benspa_vitals/sources');
+assert.strictEqual(s.identification([0x62, 0xf1, 0x50, 0x0f, 0x26, 0xe8]), '0F26E8');
+assert.strictEqual(s.identification([0x62, 0xf1, 0x50, 0x0f, 0x26]), null);
+assert.ok(s.DME8.has('0F26E8'));
+assert.ok(!s.DME8.has('0F21E0'));
+assert.ok(Math.abs(s.fuel5656([0x62, 0x56, 0x56, 0x03, 0xe8]) - 4.291524) < 0.000001);
+assert.strictEqual(s.fuel5656([0x62, 0x56, 0x56, 0xff, 0xff]), null);
+assert.strictEqual(s.fuel5656([0x62, 0x56, 0x56, 1]), null);
+assert.strictEqual(s.temperature([0x62, 0x46, 0x50, 0x80], 0x4650, -48, 0.75), 48);
+assert.strictEqual(s.temperature([0x62, 0x60, 0x00, 118], 0x6000, -40, 1), 78);
+assert.strictEqual(s.temperature([0x62, 0x60, 0x00, 255], 0x6000, -40, 1), null);
+assert.strictEqual(s.temperature([0x62, 0x60, 0x00, 118, 0], 0x6000, -40, 1), null);
+console.log('Verified controller identifiers, fuel conversion and gearbox decoders OK');
+(async () => {
+    const asked = [];
+    const link = { async read(ecu,did) {
+        asked.push([ecu,did]);
+        if (did === 0x5656) return [0x62, 0x56, 0x56, 0x03, 0xe8];
+        if (did === 0x4650) return [0x62, 0x46, 0x50, 0x80];
+        if (did === 0x6000) return [0x62, 0x60, 0x00, 118];
+        return null;
+    }};
+    const rd = { async value() { return 3.5; } };
+    let got = await s.readFuel(link, rd, '0F26E8', []);
+    assert.ok(Math.abs(got.value - 4.291524) < 1e-6);
+    assert.strictEqual(got.source, 'DME 5656');
+    assert.strictEqual(await s.readDmeGearbox(link, '0F26E8'), 48);
+    assert.strictEqual(await s.readEgsGearbox(link, '0F25D0'), 78);
+    asked.length = 0;
+    got = await s.readFuel(link, rd, 'UNKNOWN', []);
+    assert.strictEqual(got.value, 3.5);
+    assert.strictEqual(await s.readDmeGearbox(link, 'UNKNOWN'), null);
+    assert.strictEqual(await s.readEgsGearbox(link, 'UNKNOWN'), null);
+    assert.strictEqual(asked.length, 0, 'Unknown controllers never receive vendor-specific reads');
+    console.log('Fuel fallback and gearbox controller gates OK');
+})().catch(e => { console.error(e); process.exit(1); });

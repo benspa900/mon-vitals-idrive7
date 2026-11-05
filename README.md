@@ -1,15 +1,15 @@
 # Mon Vitals — iDrive 7
 
-Application personnelle de tableau de bord sur une seule page, issue du kit et de M Vitals du projet [idrive7-apps](https://github.com/cauliflowermossgrape/idrive7-apps). Cible : unité BMW MGU iDrive 7 (ID7). **Prototype non testé sur véhicule** ; la compatibilité des signaux, du calculateur et du micrologiciel doit être vérifiée sur la voiture.
+Application personnelle de tableau de bord sur une seule page, issue du kit et de M Vitals du projet [idrive7-apps](https://github.com/cauliflowermossgrape/idrive7-apps). Cible : unité BMW MGU iDrive 7 (ID7). La compatibilité des signaux, du calculateur et du micrologiciel doit être vérifiée sur chaque voiture ; les nouvelles sources de la version 0.2.0 restent à vérifier sur véhicule.
 
 ## Affichage
 
 Régime et jauge au centre ; vitesse à gauche et rapport à droite ; puissance (kW par défaut), couple, turbo, températures d'huile moteur et boîte, liquide de refroidissement, quatre pressions de pneus et leurs cibles. Une jauge de consommation montre l'instantanée en bleu et la moyenne BC1 par un repère jaune. Les jauges moteur ont des repères de maximum. Les données manquantes ou périmées sont affichées `--`.
 
 - La puissance est calculée par défaut à partir du couple et du régime. Il est possible de choisir l'affichage sportif dans les réglages ; sa puissance maximale doit être réglée pour la voiture.
-- La consommation instantanée est calculée à partir du débit carburant OBD PID 5E et de la vitesse, uniquement à partir de 5 km/h. Si le calculateur ne fournit pas ce débit ou s'il est périmé, elle affiche `--`. Elle nécessite validation sur la voiture.
+- La consommation instantanée est calculée à partir du débit carburant et de la vitesse, uniquement à partir de 5 km/h. L'application essaie le débit documenté pour le calculateur DME8FF_R reconnu, puis les lectures OBD PID 5E et UDS F45E. Si aucun débit valide n'est disponible, elle affiche `--`. Ces lectures nécessitent validation sur la voiture.
 - La moyenne correspond à la moyenne **BC1 de l'ordinateur de bord BMW**, lue seulement si son unité est connue en L/100 km. Sa période dépend des réglages BMW. Ce choix peut être modifié ultérieurement.
-- Les pneus utilisent les signaux M Vitals ; cible absente = `--`. La température de boîte dépend du signal disponible et est omise si elle n'est pas reconnue comme plausible. Les échelles et unités doivent être comparées aux données de la voiture.
+- Les pneus utilisent les signaux M Vitals ; cible absente = `--`. La température de boîte utilise le signal BMW disponible et, en complément, des lectures de diagnostic uniquement pour les calculateurs identifiés dont le décodage est documenté dans le projet d'origine. Elle reste `--` si aucune source valide n'est disponible. Les échelles et unités doivent être comparées aux données de la voiture.
 - La reconnaissance du panneau de limitation n'est **pas incluse** : son accès n'a pas été identifié. Les températures, le turbo et les autres données disponibles dépendent du modèle. `EST.` indique un rapport estimé.
 - Le mode démonstration est désactivé par défaut sur la voiture. Il doit être activé explicitement pour afficher des données fictives, signalées par `DEMO`.
 
@@ -21,7 +21,7 @@ Régime et jauge au centre ; vitesse à gauche et rapport à droite ; puissance 
 4. Le Store construit l'application depuis les sources avec le SDK de la voiture. Si nécessaire, il demande ou installe ses dépendances déclarées : moteur graphique compatible, composant de commandes et Python du Store. Les versions du Store et ses dépendances peuvent influencer la procédure.
 5. Ouvrir l'application puis vérifier à l'arrêt les unités, les réglages et les valeurs par rapport aux indications BMW. Une donnée non prise en charge reste `--`.
 
-L'installation réelle, le téléchargement par le Store et les signaux n'ont pas été testés sur la voiture de l'auteur du projet. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
+Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.2.0 agrandit les valeurs et ajoute des pistes pour la consommation instantanée et la température de boîte ; leur disponibilité dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
 
 ## Émulateur sur Mac
 
@@ -37,6 +37,7 @@ La lecture des calculateurs passe par le filtre `readonly-diag.js`, qui autorise
 
 ```sh
 node tests/test_values.js
+node tests/test_sources.js
 node tests/test_dashboard.js
 python3 kit/tools/build.py benspa_vitals --preview-only
 ```

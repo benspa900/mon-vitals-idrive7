@@ -5,7 +5,8 @@ const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const number = (n, decimals) => finite(n) ? n.toFixed(decimals || 0).replace('.', ',') : '--';
 
 function draw(cv, t, G, d) {
-    const bottom = G.pageBottom(cv), Y = n => Math.round(12 + n * (bottom - 26) / 480);
+    // Spread the composition down the available page, including the extra full-screen area.
+    const bottom = G.pageBottom(cv), Y = n => Math.round(18 + n * (bottom - 34) / 465);
     const white = t.text, dim = t.dim, muted = '#293b48', blue = '#0872e9', light = '#69d4ff', red = '#ec243f';
     const label = (s, x, y, align, size) => cv.text(s, x, Y(y), size || 22, dim, { font:'bold', align:align || 'left', spacing:1 });
     const text = (s, x, y, size, align, color) => cv.text(String(s), x, Y(y), size, color || white, { font:'num', align:align || 'left' });
@@ -24,7 +25,7 @@ function draw(cv, t, G, d) {
     cv.fillRect(x0, Y(137), 35, 3, blue); cv.fillRect(245, Y(137), 35, 3, light);
     // Friction circle is only populated if both measured axes are available.
     label('FORCES G', x0, 186);
-    const gx = 125, gy = Y(303), gr = Math.min(74, (bottom-26)*0.16);
+    const gx = 125, gy = Y(325), gr = Math.min(74, (bottom-26)*0.16);
     [1, 0.66, 0.33].forEach(k => cv.arc(gx, gy, gr*k-1, gr*k, 0, 360, muted));
     cv.line(gx-gr,gy,gx+gr,gy,1,dim); cv.line(gx,gy-gr,gx,gy+gr,1,dim);
     if (finite(d.gLat) && finite(d.gLong)) {
@@ -32,10 +33,10 @@ function draw(cv, t, G, d) {
         const norm = Math.max(1, Math.sqrt(a*a+b*b));
         cv.circle(gx+a/norm*gr, gy-b/norm*gr, 6, light);
     }
-    text(number(d.gLat,2)+' G', 47, 415, 20); text(number(d.gLong,2)+' G', 147, 415, 20);
-    cv.line(240, Y(178), 240, Y(439), 1, muted);
+    text(number(d.gLat,2)+' G', 47, 445, 20); text(number(d.gLong,2)+' G', 147, 445, 20);
+    cv.line(240, Y(178), 240, Y(460), 1, muted);
     [['HUILE MOTEUR',d.oil],['HUILE BOITE',d.gearbox],['REFROIDISSEMENT',d.coolant]].forEach((row,i) => {
-        const y = 198+i*86; label(row[0], 261, y, 'left', 17);
+        const y = 200+i*95; label(row[0], 261, y, 'left', 17);
         text(number(row[1],0)+' '+d.tempUnit, 261, y+37, 33);
         if (i < 2) cv.line(261,Y(y+51),448,Y(y+51),1,muted);
     });
@@ -53,29 +54,32 @@ function draw(cv, t, G, d) {
         for (let i=1;i<vals.length;i++) { const a=point(side,offset,vals[i-1]), b=point(side,offset,vals[i]); cv.line(a[0],a[1],b[0],b[1],width,color); }
     }
     [-1,1].forEach(side => {
-        [0,11].forEach(off => stroke(side,off,0,1,muted,4));
-        if (finite(d.rpm)) stroke(side,0,0,d.rpm/rm,blue,5);
-        if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,11,0,d.rpmPeak/rm,light,4);
+        // Faceted BMW-inspired band, with current and held-maximum tracks inside it.
+        stroke(side,0,0,1,'#202d3a',28);
+        stroke(side,15,0,1,'#a5b6c7',3);
+        stroke(side,-15,0,1,'#586b7c',2);
+        if (finite(d.rpm)) stroke(side,-5,0,d.rpm/rm,blue,6);
+        if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,5,0,d.rpmPeak/rm,light,4);
         const redFrom = finite(d.redline) && d.redline > 0 ? clamp(d.redline/rm,0.6,1) : 0.9;
-        [0,11].forEach(off => stroke(side,off,redFrom,1,red,3));
+        stroke(side,0,redFrom,1,red,7);
+        for (let rpm=0; rpm<=rm; rpm+=1000) {
+            const p=point(side,-17,rpm/rm);
+            cv.line(p[0],p[1],p[0]-side*8,p[1],2,white);
+            cv.text(String(rpm/1000),p[0]-side*14,p[1]+6,20,white,{font:'num',align:side<0?'left':'right'});
+        }
     });
-    label('REGIME MOTEUR', c, 44, 'center', 21);
-    text(number(d.rpm,0), c, 116, 58, 'center'); label('tr/min', c, 144, 'center', 21);
     const gear = d.gear ? d.gear.letter + d.gear.num : '--';
-    text(gear, c, 257, 100, 'center'); label(d.gear && d.gear.est ? 'RAPPORT EST.' : 'RAPPORT', c, 286, 'center', 21);
-    text(number(d.speed,0), c, 385, 58, 'center'); label(d.speedUnit || 'km/h', c, 414, 'center', 21);
-    // Five angled M-style gauges. The numbers retain their actual values above the chosen scale.
+    text(gear, c, 160, 108, 'center'); label(d.gear && d.gear.est ? 'RAPPORT EST.' : 'RAPPORT', c, 187, 'center', 21);
+    text(number(d.speed,0), c, 275, 68, 'center'); label(d.speedUnit || 'km/h', c, 303, 'center', 21);
+    text(number(d.rpm,0), c, 386, 58, 'center'); label('tr/min', c, 414, 'center', 21);
+    // Use the M Vitals bar renderer, with its current-value cap and held peak.
     function metric(title, value, unit, max, peak, index, decimals) {
-        const y=28+index*92, vx=1137, bx=1137, bw=423, by=Y(y+48), bh=12, sl=10;
+        const y=28+index*92, vx=1137, bx=1137, bw=423, by=Y(y+48);
         label(title,vx,y,'left',18);
         const valueWidth = text(number(value,decimals),vx,y+36,37);
         cv.text(' '+unit, vx+valueWidth, Y(y+36), 20, dim);
-        cv.quad([[bx+sl,by],[bx+bw,by],[bx+bw-sl,by+bh],[bx,by+bh]],muted);
-        if (finite(value) && finite(max) && max>0) {
-            const w=(bw-sl)*clamp(value/max,0,1);
-            if (w>1) cv.quad([[bx+sl,by],[bx+sl+w,by],[bx+w,by+bh],[bx,by+bh]],blue);
-        }
-        if (finite(value) && finite(peak) && finite(max) && max>0) { const px=bx+sl+(bw-sl)*clamp(peak/max,0,1); cv.line(px,by-5,px,by+bh+5,2,light); }
+        max = finite(max) && max > 0 ? max : 1;
+        G.bar(cv,t,bx,by,bw,30,{head:false,value,min:0,max,step:max/4,ramp:'hot',peak:finite(value) ? peak : null});
     }
     const p=d.peaks || {};
     metric(d.powerEstimated ? 'PUISSANCE CALC.' : 'PUISSANCE',d.power,d.powerUnit,d.powerMax,p.power,0,0);

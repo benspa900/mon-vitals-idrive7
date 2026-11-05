@@ -9,7 +9,8 @@ const cv = {
     quad() {}, arc() {}, circle(...args) { dots.push(args); }
 };
 const t = { text:'white', dim:'gray', warn:'yellow' };
-const G = { pageBottom: () => 512 };
+const bars = [];
+const G = { pageBottom: () => 512, bar(cv,t,x,y,w,h,spec) { bars.push(spec); } };
 const d = { rpm:null, rpmPeak:5000, speed:null, speedUnit:'km/h', gear:null, power:null, powerUnit:'kW', powerMax:215, torque:null, torqueUnit:'Nm', torqueMax:900, boost:null, boostUnit:'bar', boostMax:2.5, tempUnit:'C', peaks:{}, pedal:null, engineLoad:null };
 dashboard.draw(cv, t, G, d);
 assert.ok(seen.some(x => x.s === '--'), 'Unavailable readings are explicit');
@@ -22,9 +23,10 @@ dashboard.draw(cv, t, G, d);
 assert.ok(seen.some(x => x.s === 'DEMO'));
 assert.ok(seen.some(x => x.s === 'S3'));
 const rpm = seen.find(x => x.s === '3000'), gear = seen.find(x => x.s === 'S3'), speed = seen.find(x => x.s === '96');
-assert.ok(rpm.y < gear.y && gear.y < speed.y && gear.size > rpm.size && gear.size > speed.size, 'RPM above, large gear in centre, speed below');
+assert.ok(gear.y < speed.y && speed.y < rpm.y && gear.size > rpm.size && gear.size > speed.size, 'Large gear above speed and RPM');
 assert.ok(seen.some(x => x.s === 'ACCELERATEUR') && seen.some(x => x.s === 'CHARGE MOTEUR'));
 assert.ok(lines.some(x => x[5] === '#69d4ff'), 'Held RPM uses its own stroke');
 assert.ok(fills.some(x => x[4] === '#0872e9') && fills.some(x => x[4] === '#69d4ff'), 'Consumption uses independent tracks');
 assert.strictEqual(dots.length, 1, 'A measured g-force dot is rendered');
+assert.strictEqual(bars.length, 10, 'Five M Vitals bars per page');
 console.log('Dashboard: two RPM and consumption tracks, missing values and g-force OK');

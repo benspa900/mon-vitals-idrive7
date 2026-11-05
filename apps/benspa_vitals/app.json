@@ -2,7 +2,7 @@
   "id": "benspa_vitals",
   "title": "Mon Vitals",
   "description": "Tableau de bord personnel en lecture seule pour iDrive 7",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "vendor": "benspa900",
   "loggingId": "OAB9",
   "iconGlyph": "gauge",
@@ -218,6 +218,22 @@
     {
       "key": "warmOil",
       "label": "Huile chaude a",
+      "type": "number",
+      "unit": "°C",
+      "default": 80,
+      "steps": [60, 70, 75, 80, 85, 90, 100]
+    },
+    {
+      "key": "warmGearOil",
+      "label": "Repere huile de boite chaude",
+      "type": "number",
+      "unit": "°C",
+      "default": 60,
+      "steps": [40, 50, 60, 70, 75, 80, 85, 90, 100]
+    },
+    {
+      "key": "warmCoolant",
+      "label": "Repere liquide de refroidissement chaud",
       "type": "number",
       "unit": "°C",
       "default": 80,

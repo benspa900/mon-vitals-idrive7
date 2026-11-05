@@ -16,8 +16,8 @@ function draw(cv, t, G, d) {
     label('INSTANT.', x0, 61, 'left', 18); text(number(d.instant, 1), 115, 63, 32);
     label('MOY.', 245, 61, 'left', 18); text(number(d.average, 1), 305, 63, 32);
     label('L/100 KM', x0, 85, 'left', 16);
-    function thinTrack(y, value, color, min, max) {
-        cv.fillRect(x0, Y(y), x1-x0, 5, muted);
+    function thinTrack(y, value, color, min, max, track) {
+        cv.fillRect(x0, Y(y), x1-x0, 5, track || muted);
         min = finite(min) ? min : 0; max = finite(max) && max > min ? max : 20;
         if (finite(value)) cv.fillRect(x0, Y(y), (x1-x0)*clamp((value-min)/(max-min),0,1), 5, color);
     }
@@ -42,20 +42,23 @@ function draw(cv, t, G, d) {
     }
     const scale = d.tempUnit === '°F' ? v => v*9/5+32 : v => v;
     const temperatures = [
-        ['HUILE MOTEUR',d.oil,d.oilPeak,170],
-        ['HUILE BOITE',d.gearbox,d.gearboxPeak,150],
-        ['REFROIDISSEMENT',d.coolant,d.coolantPeak,160],
+        ['HUILE MOTEUR',d.oil,d.oilPeak,170,d.oilWarm],
+        ['HUILE BOITE',d.gearbox,d.gearboxPeak,150,d.gearboxWarm],
+        ['REFROIDISSEMENT',d.coolant,d.coolantPeak,160,d.coolantWarm],
     ];
     temperatures.forEach((row,i) => {
         const y = 184+i*105;
         tempIcon(i, x0, Y(y)-26);
         label(row[0], x0+41, y, 'left', 19);
         cv.text(number(row[1],0)+' '+d.tempUnit, x1, Y(y+2), 33, finite(row[1]) ? white : dim, {font:'num',align:'right'});
-        thinTrack(y+20, row[1], blue, scale(0), scale(row[3]));
-        thinTrack(y+32, finite(row[1]) ? row[2] : null, light, scale(0), scale(row[3]));
+        const cold = finite(row[1]) && finite(row[4]) && row[1] < row[4];
+        const currentColor = cold ? '#ff9c28' : blue, peakColor = cold ? '#ffd27a' : light;
+        const trackColor = cold ? '#574226' : muted;
+        thinTrack(y+20, row[1], currentColor, scale(0), scale(row[3]), trackColor);
+        thinTrack(y+32, finite(row[1]) ? row[2] : null, peakColor, scale(0), scale(row[3]), trackColor);
     });
     label('ACTUEL', x0, 451, 'left', 16); label('MAX RECENT', 245, 451, 'left', 16);
-    cv.fillRect(x0, Y(455), 35, 3, blue); cv.fillRect(245, Y(455), 35, 3, light);
+    cv.fillRect(x0, Y(455), 35, 3, white); cv.fillRect(245, Y(455), 35, 3, dim);
     // A bent path: the two parallel strokes are current and held peak RPM respectively.
     const rm = finite(d.rpmMax) && d.rpmMax > 0 ? d.rpmMax : 8000;
     function point(side, offset, f) {

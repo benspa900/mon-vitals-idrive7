@@ -975,6 +975,7 @@ mgu.run({
                 powerEstimated: pw.calc, torque: TQ(d.torque), torqueUnit: tqU(), torqueMax: tqScale().max,
                 boost: P(d.boost), boostUnit: settings.get('pressUnit'), boostMax: (BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'])[settings.get('pressUnit') === 'psi' ? 1 : 0],
                 coolant: T(d.coolant), oil: T(d.oil), gearbox: T(gearbox), tempUnit: tU(),
+                oilWarm: T(settings.get('warmOil')), gearboxWarm: T(settings.get('warmGearOil')), coolantWarm: T(settings.get('warmCoolant')),
                 oilPeak: settings.get('peaks') ? T(pk.displayOil) : null,
                 coolantPeak: settings.get('peaks') ? T(pk.displayCoolant) : null,
                 gearboxPeak: settings.get('peaks') ? T(pk.displayGearbox) : null,

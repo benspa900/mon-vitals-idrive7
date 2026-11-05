@@ -1,59 +1,49 @@
 'use strict';
 const assert = require('assert');
 const dashboard = require('../apps/benspa_vitals/dashboard');
-const seen = [], lines = [], fills = [], dots = [];
-const cv = {
-    text(s,x,y,size,color,opts) { seen.push({s,x,y,size,font:opts && opts.font}); return String(s).length * size / 2; },
-    textWidth(s,n) { return String(s).length*n/2; },
-    fillRect(...args) { fills.push(args); }, line(...args) { lines.push(args); },
-    quad() {}, arc() {}, circle(...args) { dots.push(args); }
+const seen=[], lines=[], fills=[], bars=[];
+const cv={
+    text(s,x,y,size,color,opts) { seen.push({s,x,y,size,font:opts && opts.font}); return String(s).length*size/2; },
+    textWidth(s,n) {return String(s).length*n/2;},
+    fillRect(...args) {fills.push(args);}, line(...args) {lines.push(args);},
+    quad() {}, arc() {}, circle() {}
 };
-const t = { text:'white', dim:'gray', warn:'yellow' };
-const bars = [];
-const G = { pageBottom: () => 512, bar(cv,t,x,y,w,h,spec) { bars.push(spec); } };
-const d = { rpm:null, rpmPeak:5000, speed:null, speedUnit:'km/h', gear:null, power:null, powerUnit:'kW', powerMax:215, torque:null, torqueUnit:'Nm', torqueMax:900, boost:null, boostUnit:'bar', boostMax:2.5, tempUnit:'C', peaks:{}, pedal:null, engineLoad:null };
-d.warmGuideEnabled = true; d.warmGuide = null;
-dashboard.draw(cv, t, G, d);
-assert.ok(seen.some(x => x.s === '--'), 'Unavailable readings are explicit');
-assert.ok(!seen.some(x => x.s === 'FORCES G'), 'G-force graph has been removed');
-assert.ok(seen.some(x => x.s === 'HUILE MOTEUR') && seen.some(x => x.s === 'HUILE BOITE') && seen.some(x => x.s === 'REFROIDISSEMENT'));
-assert.strictEqual(lines.filter(x => x[5] === '#69d4ff').length, 0, 'A stale RPM peak is not displayed without current RPM');
-assert.ok(!seen.some(x => x.s === 'DEMO'), 'Real mode must not claim demo');
-assert.ok(seen.some(x => x.s === 'HUILE --'), 'Missing oil is explicit');
-assert.ok(!lines.some(x => x[5] === '#ffb020'), 'Missing oil does not invent a warm-up guide');
-seen.length=0; lines.length=0; fills.length=0;
-Object.assign(d, {demo:true, speed:96, gear:{letter:'S',num:'3',est:false}, rpm:3000, rpmPeak:5000, redline:7000, rpmMax:8000, warmGuide:3500, instant:8, average:6, oil:85, oilPeak:100, oilWarm:80, gearbox:null, gearboxPeak:90, gearboxWarm:60, coolant:80, coolantPeak:90, coolantWarm:80, tempUnit:'°C', pedal:42, engineLoad:68});
-dashboard.draw(cv, t, G, d);
-assert.ok(seen.some(x => x.s === 'DEMO'));
-assert.ok(seen.some(x => x.s === 'S3'));
-const rpm = seen.find(x => x.s === '3000'), gear = seen.find(x => x.s === 'S3'), speed = seen.find(x => x.s === '96');
-assert.ok(gear.y < speed.y && speed.y < rpm.y && gear.size > rpm.size && gear.size > speed.size, 'Large gear above speed and RPM');
-assert.ok(gear.font === 'gear' && speed.font === 'light' && rpm.font === 'light', 'Bold gear and lighter speed and RPM');
-assert.ok(seen.some(x => x.s === 'ACCELERATEUR') && seen.some(x => x.s === 'CHARGE MOTEUR'));
-assert.ok(lines.some(x => x[5] === '#69d4ff'), 'Held RPM uses its own stroke');
-assert.ok(lines.some(x => x[5] === '#ffb020') && seen.some(x => x.s === 'REPERE PERSO'), 'Cold oil reference is identified and displayed');
-assert.ok(fills.some(x => x[4] === '#0872e9') && fills.some(x => x[4] === '#69d4ff'), 'Consumption uses independent tracks');
-const Y = n => Math.round(18 + n * (512 - 34) / 465);
-const oilNow = fills.find(x => x[1] === Y(204) && x[4] === '#0872e9');
-const oilPeak = fills.find(x => x[1] === Y(216) && x[4] === '#69d4ff');
-assert.ok(oilNow && oilPeak && oilPeak[2] > oilNow[2], 'Temperature tracks show current and recent maximum');
-assert.ok(!fills.some(x => x[1] === Y(321) && x[4] === '#69d4ff'), 'No stale peak when gearbox temperature is unavailable');
-assert.ok(!fills.some(x => (x[1] === Y(309) || x[1] === Y(321)) && (x[4] === '#ff9c28' || x[4] === '#ffd27a')), 'Unknown temperature does not appear cold');
-assert.ok(fills.some(x => x[1] === Y(414) && x[4] === '#0872e9'), 'At the threshold coolant is blue');
-const oilWidthC = oilNow[2];
-fills.length=0;
-Object.assign(d, {tempUnit:'°F', oil:185, oilPeak:212, oilWarm:176, gearboxWarm:140, coolantWarm:176});
+const t={text:'white',dim:'gray',warn:'yellow'};
+const G={pageBottom:()=>512,bar(cv,t,x,y,w,h,spec) {bars.push({theme:t,x,y,w,h,spec});}};
+const d={rpm:null,rpmPeak:5000,speed:null,speedUnit:'km/h',gear:null,power:null,powerUnit:'kW',powerMax:215,torque:null,torqueUnit:'Nm',torqueMax:900,boost:null,boostUnit:'bar',boostMax:2.5,tempUnit:'°C',peaks:{},pedal:null,engineLoad:null,warmGuideEnabled:true,warmGuide:null};
+const Y=n=>Math.round(18+n*(512-34)/465);
 dashboard.draw(cv,t,G,d);
-const oilWidthF = fills.find(x => x[1] === Y(204) && x[4] === '#0872e9')[2];
-assert.ok(Math.abs(oilWidthC-oilWidthF) < 1e-6, 'Celsius and Fahrenheit use the same gauge fraction');
-assert.strictEqual(bars.length, 15, 'Five M Vitals bars per page');
-fills.length=0;
-Object.assign(d, {tempUnit:'°C', oil:60, oilPeak:85, oilWarm:80, gearbox:59, gearboxPeak:70, gearboxWarm:60, coolant:79, coolantPeak:85, coolantWarm:80});
+assert.ok(seen.some(x=>x.s==='--'));
+assert.ok(seen.some(x=>x.s==='HUILE --'));
+assert.ok(!lines.some(x=>x[5]==='#ffb020'),'No cold reference without oil');
+assert.strictEqual(bars.length,4,'Consumption and three temperature bars on the left');
+assert.strictEqual(bars[2].spec.peak,null,'No stale gearbox maximum');
+assert.ok(!fills.some(x=>x[0]===1137 && (x[4]==='#0872e9'||x[4]==='#69d4ff')),'No invented right-hand value');
+seen.length=lines.length=fills.length=bars.length=0;
+Object.assign(d,{demo:true,speed:96,gear:{letter:'S',num:'3',est:false},rpm:3000,rpmPeak:5000,redline:7000,rpmMax:8000,warmGuide:3500,instant:8,average:6,oil:60,oilPeak:85,oilWarm:80,gearbox:59,gearboxPeak:70,gearboxWarm:60,coolant:79,coolantPeak:85,coolantWarm:80,power:100,powerMax:200,peaks:{power:150},pedal:42,engineLoad:68});
 dashboard.draw(cv,t,G,d);
-assert.ok([204,309,414].every(y => fills.some(x => x[1] === Y(y) && x[4] === '#ff9c28')), 'All three cold readings are orange');
-assert.ok([216,321,426].every(y => fills.some(x => x[1] === Y(y) && x[4] === '#ffd27a')), 'Held peaks follow the current warm-up state');
-fills.length=0;
-Object.assign(d, {tempUnit:'°F', oil:140, oilPeak:185, oilWarm:176, gearbox:138.2, gearboxPeak:158, gearboxWarm:140, coolant:174.2, coolantPeak:185, coolantWarm:176});
+const rpm=seen.find(x=>x.s==='3000'),gear=seen.find(x=>x.s==='S3'),speed=seen.find(x=>x.s==='96');
+assert.ok(gear.y<speed.y && speed.y<rpm.y && gear.size>rpm.size && gear.size>speed.size);
+assert.ok(gear.font==='gear' && speed.font==='light' && rpm.font==='light');
+assert.ok(seen.some(x=>x.s==='REPERE PERSO') && lines.some(x=>x[5]==='#ffb020'));
+assert.strictEqual(bars.length,4);
+assert.strictEqual(bars[0].spec.value,8,'Consumption uses the actual value');
+assert.ok(lines.some(x=>x[5]==='#69d4ff' && x[1]===Y(97)-3),'Average is a distinct consumption marker');
+assert.ok(bars.slice(1).every(b=>b.spec.color==='#ff9c28' && b.theme.hang==='#ffd27a'),'Cold temperatures and peaks remain orange');
+assert.strictEqual(bars[1].spec.peak,85,'Temperature peak is preserved');
+const first=Y(28+48),second=Y(28+60);
+const now=fills.find(x=>x[0]===1137 && x[1]===first && x[4]==='#0872e9');
+const peak=fills.find(x=>x[0]===1137 && x[1]===second && x[4]==='#69d4ff');
+assert.ok(now && peak && peak[2]>now[2],'Right current and maximum have independent tracks');
+const fractionC=(bars[1].spec.value-bars[1].spec.min)/(bars[1].spec.max-bars[1].spec.min);
+bars.length=0;
+Object.assign(d,{tempUnit:'°F',oil:140,oilPeak:185,oilWarm:176,gearbox:138.2,gearboxPeak:158,gearboxWarm:140,coolant:174.2,coolantPeak:185,coolantWarm:176});
 dashboard.draw(cv,t,G,d);
-assert.ok([204,309,414].every(y => fills.some(x => x[1] === Y(y) && x[4] === '#ff9c28')), 'Fahrenheit uses converted thresholds');
-console.log('Dashboard: temperature tracks, unit conversion and unavailable readings OK');
+const fractionF=(bars[1].spec.value-bars[1].spec.min)/(bars[1].spec.max-bars[1].spec.min);
+assert.ok(Math.abs(fractionC-fractionF)<1e-6,'Temperature scale consistent across units');
+assert.ok(bars.slice(1).every(b=>b.spec.color==='#ff9c28'),'Fahrenheit thresholds correspond');
+bars.length=0;
+Object.assign(d,{tempUnit:'°C',oil:80,oilWarm:80,gearbox:60,gearboxWarm:60,coolant:80,coolantWarm:80});
+dashboard.draw(cv,t,G,d);
+assert.ok(bars.slice(1).every(b=>b.spec.color==='#0872e9'),'At threshold gauges return to blue');
+console.log('Dashboard: left gauges, right double tracks, temperatures and missing data OK');

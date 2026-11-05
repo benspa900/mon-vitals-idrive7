@@ -11,19 +11,18 @@ function draw(cv, t, G, d) {
     const label = (s, x, y, align, size) => cv.text(s, x, Y(y), size || 22, dim, { font:'bold', align:align || 'left', spacing:1 });
     const text = (s, x, y, size, align, color) => cv.text(String(s), x, Y(y), size, color || white, { font:'num', align:align || 'left' });
     const x0 = 28, x1 = 450, c = 800;
-    // Consumption: two independently scaled tracks, not two indicators on one line.
+    // One M Vitals bar: current consumption fill, BC1 average as a separate marker.
     label('CONSOMMATION', x0, 29);
     label('INSTANT.', x0, 61, 'left', 18); text(number(d.instant, 1), 115, 63, 32);
     label('MOY.', 245, 61, 'left', 18); text(number(d.average, 1), 305, 63, 32);
     label('L/100 KM', x0, 85, 'left', 16);
-    function thinTrack(y, value, color, min, max, track) {
-        cv.fillRect(x0, Y(y), x1-x0, 5, track || muted);
-        min = finite(min) ? min : 0; max = finite(max) && max > min ? max : 20;
-        if (finite(value)) cv.fillRect(x0, Y(y), (x1-x0)*clamp((value-min)/(max-min),0,1), 5, color);
+    const leftWidth = x1-x0, consoY=Y(97);
+    G.bar(cv,t,x0,consoY,leftWidth,30,{head:false,value:d.instant,min:0,max:20,step:5,color:blue});
+    if (finite(d.average)) {
+        const p=x0+(leftWidth-18)*clamp(d.average/20,0,1);
+        cv.line(p+18,consoY-3,p,consoY+25,3,light);
     }
-    thinTrack(97, d.instant, blue); thinTrack(109, d.average, light);
-    label('INSTANT.', x0, 133, 'left', 16); label('MOYENNE', 245, 133, 'left', 16);
-    cv.fillRect(x0, Y(137), 35, 3, blue); cv.fillRect(245, Y(137), 35, 3, light);
+    label('TRAIT BLEU CLAIR : MOYENNE', x0, 144, 'left', 15);
     // Compact line icons help distinguish the three temperature values.
     function tempIcon(i, x, y) {
         const line = (a,b,c,d) => cv.line(x+a,y+b,x+c,y+d,1.8,white);
@@ -54,11 +53,13 @@ function draw(cv, t, G, d) {
         const cold = finite(row[1]) && finite(row[4]) && row[1] < row[4];
         const currentColor = cold ? '#ff9c28' : blue, peakColor = cold ? '#ffd27a' : light;
         const trackColor = cold ? '#574226' : muted;
-        thinTrack(y+20, row[1], currentColor, scale(0), scale(row[3]), trackColor);
-        thinTrack(y+32, finite(row[1]) ? row[2] : null, peakColor, scale(0), scale(row[3]), trackColor);
+        const min=scale(0), max=scale(row[3]);
+        G.bar(cv,Object.assign({},t,{hang:peakColor}),x0,Y(y+20),leftWidth,30,{
+            head:false,value:row[1],min,max,step:(max-min)/4,color:currentColor,track:trackColor,
+            peak:finite(row[1]) ? row[2] : null,
+        });
     });
-    label('ACTUEL', x0, 451, 'left', 16); label('MAX RECENT', 245, 451, 'left', 16);
-    cv.fillRect(x0, Y(455), 35, 3, white); cv.fillRect(245, Y(455), 35, 3, dim);
+    label('TRAIT CLAIR : MAX RECENT', x0, 451, 'left', 15);
     // A bent path: the two parallel strokes are current and held peak RPM respectively.
     const rm = finite(d.rpmMax) && d.rpmMax > 0 ? d.rpmMax : 8000;
     function point(side, offset, f) {
@@ -117,14 +118,18 @@ function draw(cv, t, G, d) {
     cv.text(number(d.rpm,0), c, Y(386), 52, white, { font:'light', align:'center' });
     label('tr/min', c, 414, 'center', 21);
     if (d.warmGuideEnabled) cv.text(finite(d.warmGuide) ? 'REPERE PERSO' : 'HUILE --', c, Y(445), 16, finite(d.warmGuide) ? '#ffb020' : dim, {font:'bold',align:'center'});
-    // Use the M Vitals bar renderer, with its current-value cap and held peak.
+    // Right side: separate tracks for the current value and the held maximum.
     function metric(title, value, unit, max, peak, index, decimals) {
-        const y=28+index*92, vx=1137, bx=1137, bw=423, by=Y(y+48);
+        const y=28+index*92, vx=1137, bx=1137, bw=423;
         label(title,vx,y,'left',18);
         const valueWidth = text(number(value,decimals),vx,y+36,37);
         cv.text(' '+unit, vx+valueWidth, Y(y+36), 20, dim);
         max = finite(max) && max > 0 ? max : 1;
-        G.bar(cv,t,bx,by,bw,30,{head:false,value,min:0,max,step:max/4,ramp:'hot',peak:finite(value) ? peak : null});
+        [[value,blue],[finite(value) ? peak : null,light]].forEach((row,i) => {
+            const yTrack=Y(y+48+i*12);
+            cv.fillRect(bx,yTrack,bw,5,muted);
+            if (finite(row[0])) cv.fillRect(bx,yTrack,bw*clamp(row[0]/max,0,1),5,row[1]);
+        });
     }
     const p=d.peaks || {};
     metric(d.powerEstimated ? 'PUISSANCE CALC.' : 'PUISSANCE',d.power,d.powerUnit,d.powerMax,p.power,0,0);

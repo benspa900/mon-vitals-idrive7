@@ -11,4 +11,13 @@ assert.ok(Math.abs(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 'V
 assert.strictEqual(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 2, consumptionAverage1BC1: 71 }), null);
 assert.strictEqual(values.averageFuel({ statusUnitOfMeasurementConsumptionBC: 1, consumptionAverage1BC1: 65535 }), null);
 assert.strictEqual(values.averageFuel(null), null);
+assert.strictEqual(values.warmRpm(null,7000,3500,80), null);
+assert.strictEqual(values.warmRpm(NaN,7000,3500,80), null);
+assert.strictEqual(values.warmRpm(10,7000,3500,80), 3500);
+assert.strictEqual(values.warmRpm(30,7000,3500,80), 3500);
+assert.strictEqual(values.warmRpm(55,7000,3500,80), 5300);
+assert.strictEqual(values.warmRpm(80,7000,3500,80), 7000);
+assert.strictEqual(values.warmRpm(100,7000,3500,80), 7000);
+assert.strictEqual(values.warmRpm(20,3000,3500,80), 3000);
+assert.strictEqual(values.warmRpm(30,7000,3500,30), null);
 console.log('Consumption: valid readings, unknown units and stationary behavior OK');

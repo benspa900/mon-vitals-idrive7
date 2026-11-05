@@ -82,6 +82,9 @@ function draw(cv, t, G, d) {
         // Broad grey-silver surround and a blue face that follows the current RPM.
         band(side,-22,22,0,1,'#384b5d');
         band(side,-18,15,0,1,'#131d29');
+        const redRpm = finite(d.redline) && d.redline > 0 ? Math.min(d.redline,rm) : rm*0.9;
+        const hasGuide = d.warmGuideEnabled && finite(d.warmGuide);
+        if (hasGuide && d.warmGuide < redRpm) band(side,-18,15,d.warmGuide/rm,redRpm/rm,'#604417');
         stroke(side,22,0,1,'#c8d4de',2);
         stroke(side,-22,0,1,'#6b8093',2);
         if (finite(d.rpm)) {
@@ -89,7 +92,8 @@ function draw(cv, t, G, d) {
             band(side,-16,-9,0,d.rpm/rm,light);
         }
         if (finite(d.rpm) && finite(d.rpmPeak)) stroke(side,12,0,d.rpmPeak/rm,light,3);
-        const redFrom = finite(d.redline) && d.redline > 0 ? clamp(d.redline/rm,0.6,1) : 0.9;
+        if (hasGuide && d.warmGuide < redRpm) stroke(side,18,d.warmGuide/rm,redRpm/rm,'#ffb020',3);
+        const redFrom = finite(d.redline) && d.redline > 0 ? clamp(d.redline/rm,0,1) : 0.9;
         band(side,-17,12,redFrom,1,'#581522');
         stroke(side,3,redFrom,1,red,6);
         if (finite(d.rpm) && finite(d.rpmPeak)) {
@@ -109,6 +113,7 @@ function draw(cv, t, G, d) {
     label(d.speedUnit || 'km/h', c, 303, 'center', 21);
     cv.text(number(d.rpm,0), c, Y(386), 52, white, { font:'light', align:'center' });
     label('tr/min', c, 414, 'center', 21);
+    if (d.warmGuideEnabled) cv.text(finite(d.warmGuide) ? 'REPERE PERSO' : 'HUILE --', c, Y(445), 16, finite(d.warmGuide) ? '#ffb020' : dim, {font:'bold',align:'center'});
     // Use the M Vitals bar renderer, with its current-value cap and held peak.
     function metric(title, value, unit, max, peak, index, decimals) {
         const y=28+index*92, vx=1137, bx=1137, bw=423, by=Y(y+48);

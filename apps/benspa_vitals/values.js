@@ -10,4 +10,11 @@ function instantFuel(lph, speed) {
     if (typeof lph !== 'number' || !isFinite(lph) || lph < 0 || typeof speed !== 'number' || !isFinite(speed) || speed < 5) return null;
     return lph * 100 / speed;
 }
-module.exports = { averageFuel, instantFuel };
+/** Custom warm-up reference, derived from the upstream Warm-Up app, never an OEM limit. */
+function warmRpm(oilC, redline, cold, warmC) {
+    if (![oilC,redline,cold,warmC].every(x => typeof x === 'number' && isFinite(x)) || redline <= 0 || cold <= 0 || warmC <= 30) return null;
+    cold = Math.min(cold, redline);
+    const fraction = Math.max(0, Math.min(1, (oilC - 30) / (warmC - 30)));
+    return Math.min(redline, Math.round((cold + (redline-cold)*fraction)/100)*100);
+}
+module.exports = { averageFuel, instantFuel, warmRpm };

@@ -967,6 +967,8 @@ mgu.run({
             raise(pk, 'displayOil', d.oil); raise(pk, 'displayCoolant', d.coolant); raise(pk, 'displayGearbox', gearbox);
             dashboard.draw(cv, t, G, {
                 rpm: d.rpm, rpmMax: engine.scaleMax(), redline: engine.redline(),
+                warmGuideEnabled: settings.get('warmGuide'),
+                warmGuide: settings.get('warmGuide') ? values.warmRpm(d.oil, engine.redline(), engine.value('coldRpm', {diesel:3000, petrol:3500}), settings.get('warmOil')) : null,
                 rpmPeak: settings.get('peaks') ? pk.rpm : null,
                 speed: V(G.hold('speed', d.speed, 1000 / settings.get('speedRate'))), speedUnit: settings.get('speedUnit') === 'mph' ? 'mph' : 'km/h',
                 gear: gearText(d), power: PW(pw.kw), powerUnit: pwU(), powerMax: Math.max(PW(settings.get('maxPower')), G.isNum(PW(pw.kw)) ? Math.ceil(PW(pw.kw) / 25) * 25 : 0),

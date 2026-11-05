@@ -2,7 +2,7 @@
   "id": "benspa_vitals",
   "title": "Mon Vitals",
   "description": "Tableau de bord personnel en lecture seule pour iDrive 7",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "vendor": "benspa900",
   "loggingId": "OAB9",
   "iconGlyph": "gauge",
@@ -198,6 +198,30 @@
         8500,
         9000
       ]
+    },
+    {
+      "key": "warmGuide",
+      "label": "Repere personnel moteur froid",
+      "type": "bool",
+      "default": true
+    },
+    {
+      "key": "coldRpm",
+      "label": "Repere a froid (personnel)",
+      "type": "number",
+      "unit": "rpm",
+      "default": 0,
+      "labels": {"0": "Auto"},
+      "reset": 1,
+      "steps": [0, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500]
+    },
+    {
+      "key": "warmOil",
+      "label": "Huile chaude a",
+      "type": "number",
+      "unit": "°C",
+      "default": 80,
+      "steps": [60, 70, 75, 80, 85, 90, 100]
     },
     {
       "key": "rpmScale",

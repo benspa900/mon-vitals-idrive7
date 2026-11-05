@@ -2,7 +2,7 @@
   "id": "benspa_vitals",
   "title": "Mon Vitals",
   "description": "Tableau de bord personnel en lecture seule pour iDrive 7",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "vendor": "benspa900",
   "loggingId": "OAB9",
   "iconGlyph": "gauge",

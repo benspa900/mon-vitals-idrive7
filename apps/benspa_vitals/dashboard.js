@@ -103,9 +103,12 @@ function draw(cv, t, G, d) {
         }
     });
     const gear = d.gear ? d.gear.letter + d.gear.num : '--';
-    text(gear, c, 160, 108, 'center'); label(d.gear && d.gear.est ? 'RAPPORT EST.' : 'RAPPORT', c, 187, 'center', 21);
-    text(number(d.speed,0), c, 275, 68, 'center'); label(d.speedUnit || 'km/h', c, 303, 'center', 21);
-    text(number(d.rpm,0), c, 386, 58, 'center'); label('tr/min', c, 414, 'center', 21);
+    cv.text(gear, c, Y(160), 122, white, { font:'gear', align:'center' });
+    label(d.gear && d.gear.est ? 'RAPPORT EST.' : 'RAPPORT', c, 187, 'center', 21);
+    cv.text(number(d.speed,0), c, Y(275), 62, white, { font:'light', align:'center' });
+    label(d.speedUnit || 'km/h', c, 303, 'center', 21);
+    cv.text(number(d.rpm,0), c, Y(386), 52, white, { font:'light', align:'center' });
+    label('tr/min', c, 414, 'center', 21);
     // Use the M Vitals bar renderer, with its current-value cap and held peak.
     function metric(title, value, unit, max, peak, index, decimals) {
         const y=28+index*92, vx=1137, bx=1137, bw=423, by=Y(y+48);

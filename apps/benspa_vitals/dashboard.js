@@ -164,6 +164,8 @@ function draw(cv, t, G, d) {
         const valueWidth = text(number(value,decimals),vx,y+36,37);
         cv.text(' '+unit, vx+valueWidth, Y(y+36), 20, dim);
         max = finite(max) && max > 0 ? max : 1;
+        const scaleDecimals=unit==='bar' ? 2 : unit==='kgm' ? 1 : 0;
+        cv.text('/ '+number(max,scaleDecimals)+' '+unit,bx+bw,Y(y+36),17,dim,{font:'num',align:'right'});
         // Keep the numerical value and peak real; interpolate only the live pedal/load bar.
         const live = index >= 3 ? G.smooth('dashboard-metric-'+index, value, 3.5) : value;
         [live,finite(value) ? peak : null].forEach((reading,i) => {
@@ -176,8 +178,8 @@ function draw(cv, t, G, d) {
     metric(d.powerEstimated ? 'PUISSANCE CALC.' : 'PUISSANCE',d.power,d.powerUnit,d.powerMax,p.power,0,0);
     metric('COUPLE',d.torque,d.torqueUnit,d.torqueMax,p.torque,1,0);
     metric('TURBO',d.boost,d.boostUnit,d.boostMax,p.boost,2,2);
-    metric('ACCELERATEUR',d.pedal,'%',100,p.pedal,3,0);
-    metric('CHARGE MOTEUR',d.engineLoad,'%',100,p.engineLoad,4,0);
+    metric('ACCELERATEUR',d.pedal,'%',d.pedalMax || 100,p.pedal,3,0);
+    metric('CHARGE MOTEUR',d.engineLoad,'%',d.loadMax || 100,p.engineLoad,4,0);
     if (d.demo) cv.text('DEMO',c,bottom-4,18,t.warn,{font:'bold',align:'center'});
 }
 module.exports = { draw };

@@ -955,6 +955,9 @@ mgu.run({
             }
         }
 
+        // Keep the test drive and real car scales separate. Maxima grow during a session,
+        // and reset when the app restarts or the corresponding setting is changed.
+        const gaugeScales = {car:{}, demo:{}};
         async function render() {
             const t = ctx.theme(), d = data();
             const cv = ctx.canvas(W, H).clear(t.bg);
@@ -963,6 +966,14 @@ mgu.run({
             const instant = isDemo ? 8.4 : (fuelRateAt && now - fuelRateAt < 8000 ? values.instantFuel(live.fuelRate, d.speed) : null);
             const pw = power(d); const pk = isDemo ? demoPeak : peak;
             raise(pk, 'power', pw.kw); ['rpm', 'boost', 'torque', 'pedal', 'engineLoad'].forEach(k => raise(pk, k, d[k]));
+            const scales = gaugeScales[isDemo ? 'demo' : 'car'];
+            const scale = (key, setting, current, peakValue, step) =>
+                values.expandScale(scales, key, settings.get(setting), current, peakValue, step);
+            const powerMax = scale('power','gaugePower',pw.kw,pk.power,10);
+            const torqueMax = scale('torque','gaugeTorque',d.torque,pk.torque,25);
+            const boostMax = scale('boost','gaugeBoost',d.boost,pk.boost,0.25);
+            const pedalMax = scale('pedal','gaugePedal',d.pedal,pk.pedal,10);
+            const loadMax = scale('load','gaugeLoad',d.engineLoad,pk.engineLoad,10);
             const gearbox = G.isNum(d.gearbox) ? d.gearbox : (!isDemo && live.gearDiagnosticAt && now - live.gearDiagnosticAt < 30000 ? live.gearDiagnostic : null);
             raise(pk, 'displayOil', d.oil); raise(pk, 'displayCoolant', d.coolant); raise(pk, 'displayGearbox', gearbox);
             dashboard.draw(cv, t, G, {
@@ -971,16 +982,16 @@ mgu.run({
                 warmGuide: settings.get('warmGuide') ? values.warmRpm(d.oil, engine.redline(), engine.value('coldRpm', {diesel:3000, petrol:3500}), settings.get('warmOil')) : null,
                 rpmPeak: settings.get('peaks') ? pk.rpm : null,
                 speed: V(G.hold('speed', d.speed, 1000 / settings.get('speedRate'))), speedUnit: settings.get('speedUnit') === 'mph' ? 'mph' : 'km/h',
-                gear: gearText(d), power: PW(pw.kw), powerUnit: pwU(), powerMax: Math.max(PW(settings.get('maxPower')), G.isNum(PW(pw.kw)) ? Math.ceil(PW(pw.kw) / 25) * 25 : 0),
-                powerEstimated: pw.calc, torque: TQ(d.torque), torqueUnit: tqU(), torqueMax: tqScale().max,
-                boost: P(d.boost), boostUnit: settings.get('pressUnit'), boostMax: (BOOST_MAX[settings.get('boostMax')] || BOOST_MAX['2.5'])[settings.get('pressUnit') === 'psi' ? 1 : 0],
+                gear: gearText(d), power: PW(pw.kw), powerUnit: pwU(), powerMax: PW(powerMax),
+                powerEstimated: pw.calc, torque: TQ(d.torque), torqueUnit: tqU(), torqueMax: TQ(torqueMax),
+                boost: P(d.boost), boostUnit: settings.get('pressUnit'), boostMax: P(boostMax),
                 coolant: T(d.coolant), oil: T(d.oil), gearbox: T(gearbox), tempUnit: tU(),
                 oilWarm: T(settings.get('warmOil')), gearboxWarm: T(settings.get('warmGearOil')), coolantWarm: T(settings.get('warmCoolant')),
                 oilPeak: settings.get('peaks') ? T(pk.displayOil) : null,
                 coolantPeak: settings.get('peaks') ? T(pk.displayCoolant) : null,
                 gearboxPeak: settings.get('peaks') ? T(pk.displayGearbox) : null,
                 instant: instant, average: avg,
-                pedal: d.pedal, engineLoad: d.engineLoad,
+                pedal: d.pedal, pedalMax, engineLoad: d.engineLoad, loadMax,
                 peaks: settings.get('peaks') ? { power: PW(pk.power), torque: TQ(pk.torque), boost: P(pk.boost), pedal: pk.pedal, engineLoad: pk.engineLoad } : {}, demo: isDemo,
             });
             if (!render.n) { render.n = 1; log.info('first frame drawn'); }
@@ -990,6 +1001,8 @@ mgu.run({
         // every screen refresh (60 fps) with the GPU renderer; 10 fps in software (PNG frames)
         ctx.loop('MAIN', 10, render);
         settings.onChange((k) => {
+            const scaleKey = {gaugePower:'power',gaugeTorque:'torque',gaugeBoost:'boost',gaugePedal:'pedal',gaugeLoad:'load'}[k];
+            if (scaleKey) { delete gaugeScales.car[scaleKey]; delete gaugeScales.demo[scaleKey]; }
             if (k === 'maxPower' || k === 'powerSource') { delete peak.power; delete demoPeak.power; }
             if (k === 'boostSource') { delete peak.boost; updBoost(); }
             if (k === 'page') page = Math.max(0, PAGES.indexOf(settings.get('page')));

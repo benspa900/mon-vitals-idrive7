@@ -17,4 +17,14 @@ function warmRpm(oilC, redline, cold, warmC) {
     const fraction = Math.max(0, Math.min(1, (oilC - 30) / (warmC - 30)));
     return Math.min(redline, Math.round((cold + (redline-cold)*fraction)/100)*100);
 }
-module.exports = { averageFuel, instantFuel, warmRpm };
+/** Stable, session-local scale: expand for actual/held values; never infer missing readings. */
+function expandScale(state, key, base, current, peak, step) {
+    const finite = x => typeof x === 'number' && isFinite(x);
+    if (!finite(base) || base <= 0 || !finite(step) || step <= 0) return null;
+    const needed = finite(current) ? Math.max(0, current, finite(peak) ? peak : 0) : 0;
+    const expanded = Math.ceil((needed - 1e-9) / step) * step;
+    const max = Math.max(base, state[key] || 0, expanded);
+    state[key] = Math.round(max * 1000) / 1000;
+    return state[key];
+}
+module.exports = { averageFuel, instantFuel, warmRpm, expandScale };

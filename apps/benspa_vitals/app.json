@@ -2,7 +2,7 @@
   "id": "benspa_vitals",
   "title": "Mon Vitals",
   "description": "Tableau de bord personnel en lecture seule pour iDrive 7",
-  "version": "0.9.5",
+  "version": "0.9.6",
   "vendor": "benspa900",
   "loggingId": "OAB9",
   "iconGlyph": "gauge",
@@ -110,8 +110,29 @@
       ]
     },
     {
+      "key": "gaugePower", "label": "Echelle puissance", "type": "number", "unit": "kW",
+      "default": 120, "steps": [100, 120, 140, 160, 200, 250, 300, 400, 500, 600]
+    },
+    {
+      "key": "gaugeTorque", "label": "Echelle couple", "type": "number", "unit": "Nm",
+      "default": 250, "steps": [200, 250, 300, 350, 400, 500, 600, 750, 900, 1200]
+    },
+    {
+      "key": "gaugeBoost", "label": "Echelle turbo", "type": "number", "unit": "bar",
+      "default": 1.5, "steps": [1, 1.5, 2, 2.5, 3, 3.5, 4]
+    },
+    {
+      "key": "gaugePedal", "label": "Echelle accelerateur", "type": "number", "unit": "%",
+      "default": 50, "steps": [25, 50, 75, 100]
+    },
+    {
+      "key": "gaugeLoad", "label": "Echelle charge moteur", "type": "number", "unit": "%",
+      "default": 50, "steps": [25, 50, 75, 100]
+    },
+    {
       "key": "boostMax",
-      "label": "Echelle du turbo",
+      "label": "Echelle du turbo historique",
+      "hidden": true,
       "type": "choice",
       "default": "2.5",
       "options": [

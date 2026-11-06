@@ -33,6 +33,7 @@ assert.ok(quads.some(q=>q.color==='#98510f'),'Warm-up zone is visible in the RPM
 const rpmColors=quads.filter(q=>q.pts[0][0]<1137 && q.pts[0][0]>400 && Array.isArray(q.color)).map(q=>q.color.join(','));
 assert.ok(new Set(rpmColors).size>8,'RPM bands use a continuous colour ramp');
 assert.strictEqual(bars.length,4);
+assert.ok(seen.some(x=>x.s==='/ 200 kW'),'Power scale is displayed');
 assert.strictEqual(bars[0].spec.value,8,'Consumption uses the actual value');
 assert.strictEqual(bars[0].spec.ramp,'hot','Consumption uses M Vitals colours');
 assert.strictEqual(bars[0].spec.smooth,3.5,'Consumption bar uses gradual motion');

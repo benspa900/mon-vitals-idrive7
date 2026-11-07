@@ -34,6 +34,25 @@ Vérifier aussi le fonctionnement de `mgu-deploy`, les dépendances et la prése
 
 Le garde officiel repart à zéro quand la version du renderer change. S'il y a déjà un strike, une désactivation ou des redémarrages, s'arrêter et conserver les preuves ; ne pas utiliser `guard-reset` pour rendre l'installation possible. Une sauvegarde du garde sert à l'analyse, pas à effacer un événement survenu après l'essai.
 
+## Téléchargement directement sur la MGU
+
+La même structure est aussi fournie sous `f44-hud-installation.tgz` sur la release GitHub. Après les vérifications préalables et si la MGU est connectée à Internet, vérifier que `curl`, `tar` et `sha256sum` existent sur la voiture ; sinon utiliser la clé préparée sur le Mac. Avec votre accès root habituel :
+
+```sh
+curl -fL 'https://github.com/benspa900/mon-vitals-idrive7/releases/download/f44-small-hud-experimental-0.4.900002/f44-hud-installation.tgz' -o /tmp/f44-hud-installation.tgz
+sha256sum /tmp/f44-hud-installation.tgz
+```
+
+Comparer impérativement au SHA-256 publié dans `SHA256SUMS` sur la release. Si la somme correspond, extraire et lancer :
+
+```sh
+mkdir /tmp/f44-hud-installation
+tar -xzf /tmp/f44-hud-installation.tgz -C /tmp/f44-hud-installation
+sh /tmp/f44-hud-installation/install-f44-hud.sh
+```
+
+Si une commande ou un contrôle échoue, arrêter. Le script ne remplace pas la vérification visuelle des slots et du retour arrière. Les téléchargements et fichiers temporaires sont créés sur la MGU après ces vérifications. Pour un retour avec le paquet officiel inclus, il sera dans `/tmp/f44-hud-installation/retour-officiel/` tant que le dossier temporaire existe ; conserver également une copie hors de la MGU, car `/tmp` peut être vidé.
+
 ## Installation guidée depuis la clé
 
 Après les vérifications précédentes, identifier le vrai point de montage de la clé sous `/media` et, en root, lancer :

@@ -1,91 +1,34 @@
-name: Build experimental F44 HUD package
+name: Verify experimental F44 HUD patch
 on:
   push:
     branches: ["experiment/f44-small-hud"]
-    paths: [".github/workflows/build-f44-hud.yml"]
+    paths: [".github/workflows/build-f44-hud.yml", "experiments/f44-hud/**"]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 10
     steps:
-      - name: Checkout experimental patch
+      - name: Checkout experiment
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           path: experiment
           persist-credentials: false
-      - name: Checkout exact upstream base
+      - name: Checkout exact upstream source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: robertnisipeanu/idrive-apps
           ref: 88e8554b1d81593d85f8095b4f0c38213223990d
           path: upstream
-          fetch-depth: 0
           persist-credentials: false
-      - name: Apply patch and set experimental defaults
+      - name: Apply patch and check HUD protections
         working-directory: upstream
         run: |
           set -eu
-          git apply --check ../experiment/experiments/f44-hud/cluster-render-small-hud.patch
-          git apply ../experiment/experiments/f44-hud/cluster-render-small-hud.patch
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-
-          p = Path('native/cluster-render/cluster-render.conf')
-          text = p.read_text()
-          for old, new in [('hud_slot = 0x323', 'hud_slot = 0x351'),
-                           ('hud_yield_slots = 0x322', 'hud_yield_slots = 0x372'),
-                           ('hud_size = 800x480', 'hud_size = 232x132')]:
-              assert text.count(old) == 1, old
-              text = text.replace(old, new)
-          p.write_text(text)
-          p = Path('native/cluster-render/component.json')
-          obj = json.loads(p.read_text())
-          assert obj['version'] == '0.4.1'
-          obj['version'] = '0.4.2'
-          obj['title'] = 'Cluster renderer F44 HUD experimental'
-          p.write_text(json.dumps(obj, indent=2) + '\n')
-          PY
-          git config user.name github-actions
-          git config user.email github-actions@users.noreply.github.com
-          git add native/cluster-render
-          git commit -m 'Experimental F44 HUD 0x351 profile'
-      - name: Verify HUD rules
-        working-directory: upstream/native/cluster-render
-        run: |
-          g++ -std=c++14 -O2 -Wall -Wextra -Werror test/holds_test.cpp src/holds.cpp -o /tmp/holds-test
-          /tmp/holds-test
-      - name: Build native Store package
-        working-directory: upstream
-        run: node release/release.js build cluster-render
-      - name: Prepare USB folder catalog and validate checksum
-        working-directory: upstream
-        run: |
-          python3 - <<'PY'
-          import hashlib, json
-          from pathlib import Path
-          p = Path('release/out/catalog.json')
-          catalog = json.loads(p.read_text())
-          assert len(catalog['components']) == 1
-          entry = catalog['components'][0]
-          assert entry['id'] == 'cluster-render' and entry['version'] == '0.4.2'
-          artifact = entry['artifact']
-          file = p.parent / artifact['name']
-          assert file.stat().st_size == artifact['size']
-          assert hashlib.sha256(file.read_bytes()).hexdigest() == artifact['sha256']
-          artifact['url'] = artifact['name']
-          p.write_text(json.dumps(catalog, indent=2) + '\n')
-          print('Verified:', artifact['name'], artifact['sha256'])
-          PY
-      - name: Upload experimental USB folder
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: f44-hud-experimental-usb
-          path: |
-            upstream/release/out/catalog.json
-            upstream/release/out/cluster-render@0.4.2.tgz
-          if-no-files-found: error
-          retention-days: 14
+          git apply --check ../experiment/experiments/f44-hud/cluster-render-0.4.900002.patch
+          git apply ../experiment/experiments/f44-hud/cluster-render-0.4.900002.patch
+          cd native/cluster-render
+          g++ -std=c++14 -O2 -Wall -Wextra -Werror test/holds_test.cpp src/holds.cpp -o /tmp/f44-holds-test
+          /tmp/f44-holds-test

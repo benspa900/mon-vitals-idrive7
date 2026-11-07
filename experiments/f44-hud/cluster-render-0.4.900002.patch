@@ -1,0 +1,189 @@
+--- a/native/cluster-render/src/holds.cpp
++++ b/native/cluster-render/src/holds.cpp
+@@ -127,11 +127,11 @@
+ 
+ bool hud_rules(TargetSpec *t, std::string *why)
+ {
+-    if (t->slot != kHudSlot || t->scene_id != kHudScene || t->take_over_stock) {
++    if ((t->slot != kHudSlot && t->slot != kSmallHudSlot) || t->scene_id != kHudScene || t->take_over_stock) {
+         char b[200];
+-        std::snprintf(b, sizeof b, "only slot 0x%llx with scene 0x%llx, without hud_take_over_stock (hud_slot 0x%llx, "
++        std::snprintf(b, sizeof b, "only slot 0x%llx or 0x%llx with scene 0x%llx, without hud_take_over_stock (hud_slot 0x%llx, "
+                       "hud_scene_id 0x%llx%s)",
+-                      (unsigned long long)kHudSlot, (unsigned long long)kHudScene, (unsigned long long)t->slot,
++                      (unsigned long long)kHudSlot, (unsigned long long)kSmallHudSlot, (unsigned long long)kHudScene, (unsigned long long)t->slot,
+                       (unsigned long long)t->scene_id, t->take_over_stock ? ", hud_take_over_stock 1" : "");
+         *why = b;
+         return false;
+--- a/native/cluster-render/src/holds.h
++++ b/native/cluster-render/src/holds.h
+@@ -38,9 +38,10 @@
+                 std::string *warn);
+ 
+ /* The HUD's slot and scene on iDrive 7 (README.md "The HUD"). */
+-const uint64_t kHudSlot = 0x323, kHudScene = 0x01000400;
++const uint64_t kHudSlot = 0x323, kSmallHudSlot = 0x351, kHudScene = 0x01000400;
+ 
+-/* The iDrive 7 HUD's rules for t, the hud target: only slot kHudSlot with
++/* The iDrive 7 HUD's rules for t, the hud target: only slot kHudSlot or
++ * the explicitly selected experimental small-HUD slot kSmallHudSlot with
+  * scene kHudScene, never
+  * taking a slot from the stock HMI; then its layers write from the HUD's
+  * share of the budget and the guard disables it after two strikes. False,
+--- a/native/cluster-render/test/holds_test.cpp
++++ b/native/cluster-render/test/holds_test.cpp
+@@ -85,6 +85,18 @@
+         TargetSpec h;
+         h.name = "hud"; h.slot = 0x323; h.scene_id = 0x01000400;
+         ok("hud: slot 0x323 taken, with the HUD's share, struck out at 2", hud_rules(&h, &err) && h.share && h.strike_limit == 2);
++        TargetSpec small;
++        small.name = "hud"; small.slot = 0x351; small.scene_id = 0x01000400;
++        ok("hud: explicitly selected small-HUD slot shares and keeps guard", hud_rules(&small, &err) && small.share && small.strike_limit == 2);
++        TargetSpec small_taking;
++        small_taking.name = "hud"; small_taking.slot = 0x351; small_taking.scene_id = 0x01000400; small_taking.take_over_stock = true;
++        ok("hud: small-HUD slot cannot take over stock", !hud_rules(&small_taking, &err));
++        TargetSpec large;
++        large.name = "hud"; large.slot = 0x371; large.scene_id = 0x01000400;
++        ok("hud: unverified large-HUD slot refused", !hud_rules(&large, &err) && !large.share);
++        TargetSpec small_scene;
++        small_scene.name = "hud"; small_scene.slot = 0x351; small_scene.scene_id = 0x010004f0;
++        ok("hud: small-HUD slot refuses another scene", !hud_rules(&small_scene, &err) && !small_scene.share);
+         TargetSpec scene;
+         scene.name = "hud"; scene.slot = 0x323; scene.scene_id = 0x010004f0;
+         ok("hud: another scene id (the map's) refused", !hud_rules(&scene, &err) && !scene.share);
+--- a/native/cluster-render/component.json
++++ b/native/cluster-render/component.json
+@@ -1,25 +1,67 @@
+ {
+   "id": "cluster-render",
+   "kind": "tool",
+-  "version": "0.4.1",
+-  "title": "Cluster renderer",
+-  "description": "Draws every app's layers on the instrument cluster and the HUD, sharing the display slots and one upload budget",
+-  "mguHmi": ["ID7", "ID8"],
+-  "requires": { "mgu-deploy": "0.4.0" },
++  "version": "0.4.900002",
++  "title": "EXPERIMENTAL F44 HUD 0x351",
++  "description": "Experimental F44 small HUD profile enabled by default, based on official 0.4.1. Not an official release.",
++  "mguHmi": [
++    "ID7"
++  ],
++  "requires": {
++    "mgu-deploy": "0.4.0"
++  },
+   "uninstallable": true,
+-  "build": ["make", "target"],
++  "build": [
++    "make",
++    "target"
++  ],
+   "files": [
+-    { "path": "cluster-render", "from": "build/target/cluster-render", "mode": "0755" },
+-    { "path": "cluster-render-idrive7", "from": "build/target/cluster-render-idrive7", "mode": "0755" },
+-    { "path": "cluster-render-idrive8", "from": "build/target/cluster-render-idrive8", "mode": "0755" },
+-    { "path": "cluster-render.conf", "from": "cluster-render.conf", "mode": "0644" },
+-    { "path": "cluster_render_client.js", "from": "js/cluster_render_client.js", "mode": "0644" }
++    {
++      "path": "cluster-render",
++      "from": "build/target/cluster-render",
++      "mode": "0755"
++    },
++    {
++      "path": "cluster-render-idrive7",
++      "from": "build/target/cluster-render-idrive7",
++      "mode": "0755"
++    },
++    {
++      "path": "cluster-render-idrive8",
++      "from": "build/target/cluster-render-idrive8",
++      "mode": "0755"
++    },
++    {
++      "path": "cluster-render.conf",
++      "from": "cluster-render.conf",
++      "mode": "0644"
++    },
++    {
++      "path": "cluster_render_client.js",
++      "from": "js/cluster_render_client.js",
++      "mode": "0644"
++    }
+   ],
+   "units": [
+-    { "name": "cluster-render.socket", "from": "systemd/cluster-render.socket" },
+-    { "name": "cluster-render.service", "from": "systemd/cluster-render.service" }
++    {
++      "name": "cluster-render.socket",
++      "from": "systemd/cluster-render.socket"
++    },
++    {
++      "name": "cluster-render.service",
++      "from": "systemd/cluster-render.service"
++    }
+   ],
+-  "enable": [{ "unit": "cluster-render.socket", "target": "sockets.target" }],
+-  "recmgr": ["cluster-render"],
+-  "restart": ["cluster-render.service"]
++  "enable": [
++    {
++      "unit": "cluster-render.socket",
++      "target": "sockets.target"
++    }
++  ],
++  "recmgr": [
++    "cluster-render"
++  ],
++  "restart": [
++    "cluster-render.service"
++  ]
+ }
+--- a/native/cluster-render/cluster-render.conf
++++ b/native/cluster-render/cluster-render.conf
+@@ -1,7 +1,8 @@
+ # SPDX-License-Identifier: GPL-3.0-or-later
+ # Copyright (C) 2026 Robert Nisipeanu
+ 
+-# cluster-render settings. Values shown are the built-in defaults; any key can
++# EXPERIMENTAL F44 PROFILE: HUD slot/size/yield defaults below are unverified on F44.
++# cluster-render settings. Except for the experimental HUD profile, values are upstream defaults; any key can
+ # also be given on the command line as -s key=value. The unit's own settings
+ # go in local_conf, which updates keep; each key there replaces the value
+ # here. "CAR-ONLY" marks values only the car can settle.
+@@ -103,28 +104,19 @@
+ panel_size = 1920x720
+ panel_linger_ms = 3000
+ panel_take_over_stock = 0
+-# The HUD (VERIFIED on the car with the Waze map on a G80 and a G05; its
+-# 800x480 size is a guess), README.md "The HUD": only slot 0x323 with scene
+-# 0x01000400, and never taking a slot from the stock HMI
+-# (hud_take_over_stock 0), BMW's HUD guidance included; any other value
+-# leaves the HUD out and the service runs without it. Its scene id is the
+-# panel's: the two are never asked for at once. Its layers write from the
+-# HUD's share of the upload budget (up to half, only what they spend, the
+-# rest going back to the cluster; README.md "Upload budget"), its evidence
+-# never moves the cap, and the mapping guard disables it after two strikes.
+-hud_slot = 0x323
++# EXPERIMENTAL F44 small HUD profile (F40 report; not verified on F44).
++# Only slots 0x323 and 0x351 with scene 0x01000400 are allowed.
++# Never take over BMW stock HUD content. Mapping guard disables HUD after
++# two strikes. Existing local_conf values override this profile.
++hud_slot = 0x351
+ hud_content_class = 0
+ hud_scene_id = 0x01000400
+-hud_size = 800x480
++hud_size = 232x132
+ hud_linger_ms = 3000
+ hud_take_over_stock = 0
+-# The stock HMI's pop-up slots a target gives way to, and how long after the
+-# pop-up goes it is asked for again. The HUD's media and list pop-ups show in
+-# 0x322 (content 0x1000251, class 512; VERIFIED on a G05): the KOMBI takes
+-# the HUD map down for them, and asking for it again while they show pushed
+-# them from the HUD to the cluster (0x1000351 in 0x202). With 0x322 here the
+-# HUD map steps aside until the pop-up has gone.
+-hud_yield_slots = 0x322
++# Experimental F40 pop-up slot, not verified on F44. The HUD must yield
++# while BMW pop-ups are shown; check the slot on this vehicle first.
++hud_yield_slots = 0x372
+ hud_yield_ms = 1500
+ 
+ # --- guide hold (iDrive 7) ---------------------------------------------------

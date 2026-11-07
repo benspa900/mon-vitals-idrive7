@@ -1,0 +1,25 @@
+{
+  "schema": 2,
+  "components": [
+    {
+      "id": "cluster-render",
+      "kind": "tool",
+      "version": "0.4.900002",
+      "title": "EXPERIMENTAL F44 HUD 0x351",
+      "description": "Experimental F44 HUD profile active by default, based on official 0.4.1; F44 compatibility unverified.",
+      "mguHmi": [
+        "ID7"
+      ],
+      "requires": {
+        "mgu-deploy": "0.4.0"
+      },
+      "uninstallable": true,
+      "artifact": {
+        "name": "cluster-render@0.4.900002.tgz",
+        "url": "https://github.com/benspa900/mon-vitals-idrive7/releases/download/f44-small-hud-experimental-0.4.900002/cluster-render%400.4.900002.tgz",
+        "size": 7411862,
+        "sha256": "68e22e067334af22a3838c5d1c1e90a411d115373b7fa36a167df346d53118e9"
+      }
+    }
+  ]
+}

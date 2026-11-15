@@ -20,6 +20,11 @@ jobs:
         run: |
           make -j4 build/host/hud_gain_test
           build/host/hud_gain_test
+      - name: Validate all four OpenGL ES shaders
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq glslang-tools
+          for f in /tmp/f44-{direct,view}-{atlas,block}.frag; do glslangValidator -S frag "$f"; done
       - name: Build for iDrive 7 with upstream Ubuntu 18.04 toolchain
         working-directory: native/cluster-render
         run: make -j4 target

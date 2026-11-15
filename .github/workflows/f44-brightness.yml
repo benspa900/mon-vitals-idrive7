@@ -1,4 +1,4 @@
-name: Test F44 HUD brightness
+name: Test F44 HUD and map stability
 on:
   push:
     branches:
@@ -15,11 +15,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Extract modified source
         run: tar -xzf f44-hud/sources-f44-hud.tar.gz
-      - name: Verify HUD and cluster shader selection
+      - name: Test video isolation, motion and slot
         working-directory: native/cluster-render
         run: |
-          make -j4 build/host/hud_gain_test
+          g++ -std=c++14 -O2 -Wall -Wextra -Werror -Ikit -Iinclude -I. -Isrc test/f44_policy_test.cpp -o /tmp/f44-policy-test
+          /tmp/f44-policy-test
+          make -j4 build/host/hud_gain_test build/host/f44_motion_test build/host/holds_test
           build/host/hud_gain_test
+          build/host/f44_motion_test
+          build/host/holds_test
       - name: Validate all four OpenGL ES shaders
         run: |
           sudo apt-get update -qq
@@ -30,7 +34,7 @@ jobs:
         run: make -j4 target
       - uses: actions/upload-artifact@v4
         with:
-          name: f44-hud-brightness-test
+          name: f44-hud-stability-test
           path: native/cluster-render/build/target/cluster-render-idrive7
           if-no-files-found: error
           retention-days: 7

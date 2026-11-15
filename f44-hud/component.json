@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "title": "F44 HUD experimental",
-  "description": "Experimental full HUD F44 map with brighter HUD video",
+  "description": "Full HUD with softer brightness and stable cluster map",
   "mguHmi": [
     "ID7"
   ],
@@ -21,7 +21,7 @@
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "fc5aee1978a06bb2a565141c6112972703bb5a123c9bb7964e5350fa282c5b05"
+      "sha256": "12cbe5725b367b6ddd39cb2a89f633ca573f66651fb270118b09522d71e11183"
     },
     {
       "path": "cluster-render.conf",

@@ -1,0 +1,67 @@
+name: Build F44 HUD for renderer 0.6.3
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/f44-hud-063]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: robertnisipeanu/idrive-apps
+          ref: 1b5f4032ff653d8812d93622a193d0d04cd5c218
+          path: upstream
+      - name: Verify official release and renderer hash
+        run: |
+          curl -fsSL --retry 3 -o /tmp/official.tgz 'https://github.com/robertnisipeanu/idrive-apps/releases/download/cluster-render%400.6.3/cluster-render%400.6.3.tgz'
+          echo 'a12e67b0666e05668b9fc27798e0bd6e64758b3354ca32eb30fbe04c70cb22e9  /tmp/official.tgz' | sha256sum -c -
+          mkdir -p out
+          tar -xzf /tmp/official.tgz -C /tmp
+          sha256sum /tmp/files/cluster-render-idrive7 | cut -d' ' -f1 > out/official-sha256.txt
+      - name: Apply F44 adaptation
+        working-directory: upstream/native/cluster-render
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('src/holds.cpp'); s=p.read_text()
+          old='t->slot != kHudSlot || t->scene_id != kHudScene'
+          new='t->slot != 0x371 || t->scene_id != kHudScene'
+          assert s.count(old)==1
+          s=s.replace(old,new).replace('(unsigned long long)kHudSlot, (unsigned long long)kHudScene, (unsigned long long)t->slot,','(unsigned long long)0x371, (unsigned long long)kHudScene, (unsigned long long)t->slot,')
+          p.write_text(s)
+          p=Path('test/holds_test.cpp');s=p.read_text()
+          for old,new in [('h.slot = 0x323; h.scene_id','h.slot = 0x371; h.scene_id'),('slot 0x323 taken','slot 0x371 taken'),('scene.slot = 0x323','scene.slot = 0x371'),('taking.slot = 0x323','taking.slot = 0x371')]:
+              assert s.count(old)==1,(old,s.count(old))
+              s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          git diff -- src/holds.cpp test/holds_test.cpp > "$GITHUB_WORKSPACE/out/f44.patch"
+      - name: Run renderer tests
+        working-directory: upstream/native/cluster-render
+        run: |
+          make -j4 build/host/holds_test build/host/compositor_test build/host/occlusion_test build/host/video_composite_test
+          build/host/holds_test
+          build/host/compositor_test
+          build/host/occlusion_test
+          build/host/video_composite_test
+      - name: Build for iDrive
+        working-directory: upstream/native/cluster-render
+        run: make JOBS=4 target
+      - name: Collect and verify output
+        working-directory: upstream/native/cluster-render
+        run: |
+          cp build/target/cluster-render-idrive7 "$GITHUB_WORKSPACE/out/cluster-render-idrive7"
+          strip --strip-debug "$GITHUB_WORKSPACE/out/cluster-render-idrive7"
+          readelf -h "$GITHUB_WORKSPACE/out/cluster-render-idrive7"
+          sha256sum "$GITHUB_WORKSPACE/out/cluster-render-idrive7"
+          tar --exclude=build --exclude=.git -czf "$GITHUB_WORKSPACE/out/sources-f44-hud-0.11.0.tar.gz" -C "$GITHUB_WORKSPACE/upstream" native/cluster-render
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f44-hud-063-build
+          path: out/
+          if-no-files-found: error

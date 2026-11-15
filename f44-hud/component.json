@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "title": "F44 HUD experimental",
-  "description": "Experimental F44 HUD bridge; requires exact official renderer",
+  "description": "Experimental F44 HUD bridge with brighter HUD video",
   "mguHmi": [
     "ID7"
   ],
@@ -21,7 +21,7 @@
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "805e2b7c455895f2e384ae1f3e6bdb1e42c441c65fc5cf2240ac31c1178d27c6"
+      "sha256": "1c9e5aa53995caa471d94f05ed566097122bc4038dad70b749f0017444c3d2fc"
     },
     {
       "path": "cluster-render.conf",

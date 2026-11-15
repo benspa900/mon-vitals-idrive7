@@ -4,9 +4,9 @@
     {
       "id": "f44-hud-bridge",
       "kind": "tool",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "title": "F44 HUD experimental",
-      "description": "Affichage HUD F44 experimental. Test a l arret uniquement.",
+      "description": "HUD F44 experimental : carte eclaircie. Test a l arret.",
       "author": "benspa900",
       "mguHmi": [
         "ID7"
@@ -17,10 +17,10 @@
         "waze-on-cluster": "0.10.0"
       },
       "artifact": {
-        "name": "f44-hud-bridge@0.1.0.tgz",
-        "size": 448878,
-        "sha256": "4b1319eae8fb969dd80c76e82d7c0dc31126bae3576243373d019bd94c0b96b9",
-        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.1.0.tgz"
+        "name": "f44-hud-bridge@0.2.0.tgz",
+        "size": 450193,
+        "sha256": "afb1abab9892f42b15ccdfd7586a7f4065db3df882695184383c62116583d0c4",
+        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.2.0.tgz"
       }
     }
   ]

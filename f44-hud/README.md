@@ -1,18 +1,25 @@
-# F44 HUD : rétablissement 0.5.0
+# F44 HUD et carte combiné — version expérimentale 0.6.0
 
-Cette version rétablit exactement le moteur et la configuration de la
-version 0.3.0, dont la carte plein écran avait fonctionné sur la F44. Elle
-annule l'atténuation de luminosité et la correction expérimentale de la
-carte du combiné introduites en 0.4.0. La luminosité peut donc être trop
-forte et le clignotement antérieur peut réapparaître.
+Cette version reprend le moteur, la configuration et le lanceur de 0.4.0.
+Le blocage constaté après installation de 0.4.0 n'a pas exécuté ce moteur :
+les journaux indiquent que l'option Waze « Keep HUD map over BMW's pop-ups »
+était active au démarrage et le lanceur a pris son chemin de repli officiel.
+Cette option a été désactivée ensuite. La version 0.6.0 remet à disposition
+les modifications de la 0.4.0, qui n'ont pas encore été validées en voiture.
+Pour que le lanceur expérimental démarre, garder cette option désactivée
+avant de redémarrer l'iDrive.
 
-Un redémarrage iDrive est nécessaire. Si le HUD reste sur Starting, des
-journaux récents sont nécessaires pour diagnostiquer la cause ; le retour
-en 0.3.0 ne prouve pas à lui seul l'origine de la panne. La vérification
-est à faire à l'arrêt. Le lanceur, les contraintes de version et le
-marqueur de récupération sont identiques à la version 0.3.0. La désinstallation
-du composant et le redémarrage rétablissent le moteur officiel et retirent
-la carte F44 du HUD.
+Le HUD plein écran F44 conserve le slot 0x371, la zone 500x210 et un gain
+réduit de 0.5 à 0.2. Les indications BMW et le shader du combiné ne sont
+pas éclaircis. La carte Waze sur la cible map n'alterne plus entre images
+exactes et blocs compressés et est limitée à 8 images/seconde maximum : elle
+peut être moins fluide, et la suppression du clignotement n'est pas garantie.
+Cette règle ne concerne que le client waze-on-cluster sur la cible map.
 
-Les sources correspondant au moteur 0.3.0 sont disponibles dans
-sources-f44-hud-0.3.0.tar.gz (cluster-render 0.6.0 et licences).
+Vérifier le fonctionnement à l'arrêt et conserver la visibilité des
+indications et avertissements BMW. La désinstallation suivie d'un redémarrage
+rétablit le moteur officiel et retire la carte F44 du HUD. Le lanceur refuse
+les conflits de configuration et les versions non vérifiées, et utilise un
+marqueur de démarrage ; cette protection ne couvre pas toutes les pannes.
+Le retour en 0.5.0 et les versions précédentes sont conservés sur GitHub.
+Source du moteur : sources-f44-hud-0.4.0.tar.gz (cluster-render 0.6.0).

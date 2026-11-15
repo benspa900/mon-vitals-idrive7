@@ -4,9 +4,9 @@
     {
       "id": "f44-hud-bridge",
       "kind": "tool",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "title": "F44 HUD experimental",
-      "description": "HUD F44 restauration de la version 0.3.0",
+      "description": "HUD moins lumineux et stabilisation carte combine",
       "author": "benspa900",
       "mguHmi": [
         "ID7"
@@ -17,10 +17,10 @@
         "waze-on-cluster": "0.10.0"
       },
       "artifact": {
-        "name": "f44-hud-bridge@0.5.0.tgz",
-        "size": 450223,
-        "sha256": "43efd686b990af7dd3223a6ac31cef80270f95d9cbac93f443690854a1f4c6b7",
-        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.5.0.tgz"
+        "name": "f44-hud-bridge@0.6.0.tgz",
+        "size": 450305,
+        "sha256": "6bf7f118b43a7290c6b7e41d3cbf0d3e1277fad4ae006bf861a5bf9a11ee0242",
+        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.6.0.tgz"
       }
     }
   ]

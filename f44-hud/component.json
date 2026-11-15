@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "title": "F44 HUD experimental",
-  "description": "Experimental F44 HUD bridge with brighter HUD video",
+  "description": "Experimental full HUD F44 map with brighter HUD video",
   "mguHmi": [
     "ID7"
   ],
@@ -11,7 +11,7 @@
     {
       "path": "launch.sh",
       "mode": "0755",
-      "sha256": "5534635ea43303e67cce396a6005a7a92b5bec0a43a0f42bddf126dfaab993dc"
+      "sha256": "be58dd38fa55d9bcfaceec76d0cfc15d51e89352636bec85498e7f199ad768a0"
     },
     {
       "path": "clear-marker.sh",
@@ -21,12 +21,12 @@
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "1c9e5aa53995caa471d94f05ed566097122bc4038dad70b749f0017444c3d2fc"
+      "sha256": "fc5aee1978a06bb2a565141c6112972703bb5a123c9bb7964e5350fa282c5b05"
     },
     {
       "path": "cluster-render.conf",
       "mode": "0644",
-      "sha256": "e1808cf35e55aad106830cea0ef04eee092f344da31d271018fd0bab1b72f640"
+      "sha256": "24dcf983b284471f03f1be07a709b3c02af492720e7405ee8386c709b697496f"
     }
   ],
   "dropins": [

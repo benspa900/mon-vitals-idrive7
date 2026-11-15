@@ -31,5 +31,5 @@ echo "$$" > "$MARK" || fallback "cannot create recovery marker"
     sleep 120
     if kill -0 "$$" 2>/dev/null; then rm -f "$MARK"; fi
 ) </dev/null >/dev/null 2>&1 &
-echo 'f44-hud-bridge: starting experimental HUD slot 0x351' >&2
+echo 'f44-hud-bridge: starting experimental full HUD slot 0x371' >&2
 exec "$SELF/cluster-render-idrive7" -c "$SELF/cluster-render.conf"

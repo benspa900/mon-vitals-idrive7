@@ -4,23 +4,23 @@
     {
       "id": "f44-hud-bridge",
       "kind": "tool",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "title": "F44 HUD experimental",
-      "description": "HUD Waze F44 compatible rendu du combine 0.6.1",
+      "description": "HUD Waze F44 compatible rendu 0.6.2 et Waze 0.10.1",
       "author": "benspa900",
       "mguHmi": [
         "ID7"
       ],
       "uninstallable": true,
       "requires": {
-        "cluster-render": "0.6.1",
-        "waze-on-cluster": "0.10.0"
+        "cluster-render": "0.6.2",
+        "waze-on-cluster": "0.10.1"
       },
       "artifact": {
-        "name": "f44-hud-bridge@0.8.0.tgz",
-        "size": 450253,
-        "sha256": "d262c10b94e8c18bf39128fe781a8309422f87b47213e84f5a916963f0dfd554",
-        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.8.0.tgz"
+        "name": "f44-hud-bridge@0.9.0.tgz",
+        "size": 450270,
+        "sha256": "6f146957a572c4eaa0663c7472fe5b6e9cbb7c3dd0fa0a350193d2aeaf268ece",
+        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.9.0.tgz"
       }
     }
   ]

@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "title": "F44 HUD experimental",
-  "description": "F44 Waze HUD based on cluster-render 0.6.1",
+  "description": "F44 Waze HUD based on cluster-render 0.6.2",
   "mguHmi": [
     "ID7"
   ],
@@ -11,7 +11,7 @@
     {
       "path": "launch.sh",
       "mode": "0755",
-      "sha256": "0da392bf9a06e9d05b736cc6812661f7f91026a79300b5879005403d8297b42a"
+      "sha256": "bab7626c286793ee5482aaa3b30dfc784b26d1a762e2a5696a3e109f16855255"
     },
     {
       "path": "clear-marker.sh",
@@ -21,12 +21,12 @@
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "df7d5f9de2dcffe8dde3620c38d1e9f4eac2a44ff21d23e029495e5c8d32500c"
+      "sha256": "25d4ff7146e88ff58e33e4fb731d67989326c96626010105a3b10216d8a36dc2"
     },
     {
       "path": "cluster-render.conf",
       "mode": "0644",
-      "sha256": "843335bc21895084a4a44af87e676465222f9a50e48ebab502c456b3e8fd302b"
+      "sha256": "280ee70f47942053b6e470f98d95ff1a5fff5ba365c19f79b185dd9675d141be"
     }
   ],
   "dropins": [

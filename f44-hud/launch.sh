@@ -12,12 +12,12 @@ fallback() {
     echo "f44-hud-bridge: $*; starting the official renderer" >&2
     exec "$BASE/cluster-render" -c "$BASE/cluster-render.conf"
 }
-[ "$(readlink "$BASE" 2>/dev/null || true)" = versions/0.6.0 ] || fallback "cluster-render version changed"
+[ "$(readlink "$BASE" 2>/dev/null || true)" = versions/0.6.1 ] || fallback "cluster-render version changed"
 [ "$(readlink /var/opt/waze-on-cluster/current 2>/dev/null || true)" = versions/0.10.0 ] || fallback "waze-on-cluster version changed"
 [ ! -e /var/opt/cluster-render/cluster-render.local.conf ] || fallback "local configuration exists"
 [ -r "$WSTATE" ] || fallback "Waze HUD settings unavailable"
 grep -Eq '^[[:space:]]*hud_keep_shown[[:space:]]*=[[:space:]]*0[[:space:]]*$' "$WSTATE" || fallback "HUD-over-popups is enabled or unavailable"
-[ "$(sha256sum "$BASE/cluster-render-idrive7" 2>/dev/null | awk '{print $1}')" = 288a7aa89534aefdedeb676c7ad91a8eeadc1376c15f24bf92d613f0c6613319 ] || fallback "official renderer hash differs"
+[ "$(sha256sum "$BASE/cluster-render-idrive7" 2>/dev/null | awk '{print $1}')" = 1e972bae6d15451405e819445c065773c9c2f450888dfafea67d2a52fed0824a ] || fallback "official renderer hash differs"
 for conf in /var/opt/cluster-render/conf.d/*.conf /var/opt/*/current/cluster-render.d/*.conf; do
     [ -f "$conf" ] || continue
     if grep -Eq '^[[:space:]]*(hud_slot|hud_size|hud_scene_id|hud_yield_slots|hud_take_over_stock)[[:space:]]*=' "$conf"; then

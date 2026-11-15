@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "title": "F44 HUD experimental",
-  "description": "Restore F44 full HUD map and original cluster frame rate",
+  "description": "F44 Waze HUD based on cluster-render 0.6.1",
   "mguHmi": [
     "ID7"
   ],
@@ -11,7 +11,7 @@
     {
       "path": "launch.sh",
       "mode": "0755",
-      "sha256": "be58dd38fa55d9bcfaceec76d0cfc15d51e89352636bec85498e7f199ad768a0"
+      "sha256": "0da392bf9a06e9d05b736cc6812661f7f91026a79300b5879005403d8297b42a"
     },
     {
       "path": "clear-marker.sh",
@@ -21,12 +21,12 @@
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "fc5aee1978a06bb2a565141c6112972703bb5a123c9bb7964e5350fa282c5b05"
+      "sha256": "df7d5f9de2dcffe8dde3620c38d1e9f4eac2a44ff21d23e029495e5c8d32500c"
     },
     {
       "path": "cluster-render.conf",
       "mode": "0644",
-      "sha256": "24dcf983b284471f03f1be07a709b3c02af492720e7405ee8386c709b697496f"
+      "sha256": "843335bc21895084a4a44af87e676465222f9a50e48ebab502c456b3e8fd302b"
     }
   ],
   "dropins": [

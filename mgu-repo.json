@@ -31,5 +31,17 @@
       ]
     },
     "uninstallable": true
-  }
+  },
+  "components": [
+    {
+      "id": "f44-hud-bridge",
+      "kind": "tool",
+      "path": "f44-hud",
+      "uninstallable": true,
+      "requires": {
+        "cluster-render": "0.6.0",
+        "waze-on-cluster": "0.10.0"
+      }
+    }
+  ]
 }

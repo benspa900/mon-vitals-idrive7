@@ -1,0 +1,145 @@
+--- a/src/compositor.cpp
++++ b/src/compositor.cpp
+@@ -53,23 +53,6 @@
+     gl_FragColor = vec4(c.rgb, c.a * u_opacity);
+ })";
+ 
+-/* Lift mid-tones on custom HUD video only. Pixels near black stay unchanged,
+- * keeping the keyed background invisible; output is clamped to display range.
+- * Stock BMW HUD content and the cluster map use their original effects. */
+-std::string hud_bright_shader(const char *shader, bool atlas)
+-{
+-    std::string s(shader);
+-    const std::string old = atlas ? "clamp(rgb, 0.0, 1.0)" : "vec4(c, u_opacity)";
+-    const std::string change = atlas
+-        ? "clamp(rgb + max(rgb - vec3(0.065), vec3(0.0)) * 0.5, 0.0, 1.0)"
+-        : "vec4(clamp(c + max(c - vec3(0.065), vec3(0.0)) * 0.5, 0.0, 1.0), u_opacity)";
+-    const size_t pos = s.find(old);
+-    if (pos == std::string::npos || s.find(old, pos + old.size()) != std::string::npos)
+-        return std::string();
+-    s.replace(pos, old.size(), change);
+-    return s;
+-}
+-
+ }  // namespace
+ 
+ const char *layer_state_name(LayerState s)
+@@ -127,10 +110,6 @@
+     }
+     if (atlas_view_fx_) gpu_->drop_effect(atlas_view_fx_);
+     if (block_view_fx_) gpu_->drop_effect(block_view_fx_);
+-    if (hud_atlas_fx_) gpu_->drop_effect(hud_atlas_fx_);
+-    if (hud_block_fx_) gpu_->drop_effect(hud_block_fx_);
+-    if (hud_atlas_view_fx_) gpu_->drop_effect(hud_atlas_view_fx_);
+-    if (hud_block_view_fx_) gpu_->drop_effect(hud_block_view_fx_);
+     if (atlas_fx_) gpu_->drop_effect(atlas_fx_);
+     if (block_fx_) gpu_->drop_effect(block_fx_);
+     if (image_fx_) gpu_->drop_effect(image_fx_);
+@@ -294,12 +273,7 @@
+     if (!id)
+         return 0;
+     Entry &e = layers_[id];
+-    const bool hud = slots_->targets()[target].name == "hud";
+-    std::string hud_err;
+-    const bool bright = hud && hud_effects(&hud_err);
+-    if (hud && !bright) log_warn("HUD brightness effect unavailable: %s; using the original effect", hud_err.c_str());
+-    e.layer.reset(new VideoLayer(id, target, ++seq_, pacer_for(target), bright ? hud_atlas_fx_ : atlas_fx_,
+-                                 bright ? hud_block_fx_ : block_fx_, vp, now_ms));
++    e.layer.reset(new VideoLayer(id, target, ++seq_, pacer_for(target), atlas_fx_, block_fx_, vp, now_ms));
+     e.layer->params = lp;
+     e.owner = owner;
+     e.pixel_bytes = bytes;
+@@ -2154,26 +2128,6 @@
+     return block_view_fx_ != 0;
+ }
+ 
+-bool Compositor::hud_effects(std::string *err)
+-{
+-    const std::string atlas = hud_bright_shader(crk::kAtlasFragmentShader, true);
+-    const std::string block = hud_bright_shader(crk::kBlockFragmentShader, false);
+-    if (atlas.empty() || block.empty()) { *err = "unexpected HUD shader"; return false; }
+-    if (!hud_atlas_fx_) hud_atlas_fx_ = gpu_->effect(kQuadVertexShader, atlas.c_str(), err);
+-    if (hud_atlas_fx_ && !hud_block_fx_) hud_block_fx_ = gpu_->effect(kQuadVertexShader, block.c_str(), err);
+-    return hud_atlas_fx_ && hud_block_fx_;
+-}
+-
+-bool Compositor::hud_view_effects(std::string *err)
+-{
+-    const std::string atlas = hud_bright_shader(kAtlasViewFragmentShader, true);
+-    const std::string block = hud_bright_shader(kBlockViewFragmentShader, false);
+-    if (atlas.empty() || block.empty()) { *err = "unexpected HUD view shader"; return false; }
+-    if (!hud_atlas_view_fx_) hud_atlas_view_fx_ = gpu_->effect(kQuadVertexShader, atlas.c_str(), err);
+-    if (hud_atlas_view_fx_ && !hud_block_view_fx_) hud_block_view_fx_ = gpu_->effect(kQuadVertexShader, block.c_str(), err);
+-    return hud_atlas_view_fx_ && hud_block_view_fx_;
+-}
+-
+ bool Compositor::check(const Layer *l, const LayerParams &p, std::string *err)
+ {
+     if (std::string(l->kind()) != "video")
+@@ -2422,11 +2376,7 @@
+         std::string err;
+         if (!view_effects(&err))
+             log_error("composite on %s: %s", slots_->targets()[ti].name.c_str(), err.c_str());
+-        const bool hud = slots_->targets()[ti].name == "hud";
+-        const bool bright = hud && hud_view_effects(&err);
+-        if (hud && !bright) log_warn("HUD brightness view effect unavailable: %s; using original", err.c_str());
+-        t.composite.reset(new CompositeVideo(ti, pacer_for(ti), bright ? hud_atlas_view_fx_ : atlas_view_fx_,
+-                                             bright ? hud_block_view_fx_ : block_view_fx_, pl.vp, pl.x, pl.y,
++        t.composite.reset(new CompositeVideo(ti, pacer_for(ti), atlas_view_fx_, block_view_fx_, pl.vp, pl.x, pl.y,
+                                              pl.clip, now_ms_));
+         t.composite_bytes = pl.bytes;
+         t.composite_made_ms = now_ms_;
+@@ -2477,3 +2427,4 @@
+ }
+ 
+ }  // namespace crs
++
+--- a/src/compositor.h
++++ b/src/compositor.h
+@@ -536,8 +536,6 @@
+      * effects when one is needed. */
+     bool videos_fit(const std::vector<VideoSpec> &specs, uint64_t *bytes, std::string *err);
+     bool view_effects(std::string *err);
+-    bool hud_effects(std::string *err);
+-    bool hud_view_effects(std::string *err);
+     /* Brings every target's videos to its plan: which draw themselves and
+      * which its composite draws; what goes, on every target, before what
+      * is made. */
+@@ -657,8 +655,6 @@
+     int64_t (*clock_us_)() = nullptr;
+     int atlas_fx_ = 0, block_fx_ = 0, image_fx_ = 0;
+     int atlas_view_fx_ = 0, block_view_fx_ = 0;   /* the composite's, made with the first one */
+-    int hud_atlas_fx_ = 0, hud_block_fx_ = 0;
+-    int hud_atlas_view_fx_ = 0, hud_block_view_fx_ = 0;
+     std::string plan_error_;   /* why the last reconcile changed nothing; logged once */
+     std::map<uint32_t, Entry> layers_;
+     std::vector<int> render_order_, render_later_;   /* kept to save allocating them each tick */
+@@ -674,3 +670,4 @@
+ }  // namespace crs
+ 
+ #endif
++
+--- a/test/holds_test.cpp
++++ b/test/holds_test.cpp
+@@ -84,17 +84,17 @@
+     std::string err;
+     {
+         TargetSpec h;
+-        h.name = "hud"; h.slot = 0x323; h.scene_id = 0x01000400;
+-        ok("hud: slot 0x323 taken, with the HUD's share", hud_rules(&h, &err) && h.share);
++        h.name = "hud"; h.slot = 0x371; h.scene_id = 0x01000400;
++        ok("hud: slot 0x371 taken, with the HUD's share", hud_rules(&h, &err) && h.share);
+         TargetSpec scene;
+-        scene.name = "hud"; scene.slot = 0x323; scene.scene_id = 0x010004f0;
++        scene.name = "hud"; scene.slot = 0x371; scene.scene_id = 0x010004f0;
+         ok("hud: another scene id (the map's) refused", !hud_rules(&scene, &err) && !scene.share);
+         TargetSpec other;
+         other.name = "hud"; other.slot = 0x330; other.scene_id = 0x01000400;
+         ok("hud: any other slot refused, nothing set", !hud_rules(&other, &err) && !other.share &&
+                                                         err.find("hud_slot 0x330") != std::string::npos);
+         TargetSpec taking;
+-        taking.name = "hud"; taking.slot = 0x323; taking.scene_id = 0x01000400; taking.take_over_stock = true;
++        taking.name = "hud"; taking.slot = 0x371; taking.scene_id = 0x01000400; taking.take_over_stock = true;
+         ok("hud: a take-over from the stock HMI refused", !hud_rules(&taking, &err));
+     }
+     {

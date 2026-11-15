@@ -1,0 +1,40 @@
+name: F44 HUD experimental build
+on:
+  workflow_dispatch:
+  push:
+    branches: [work/f44-hud-062-minimal]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare minimal candidate
+        run: |
+          mkdir -p /tmp/f44-build
+          tar -xzf f44-hud/sources-f44-hud-0.9.0.tar.gz -C /tmp/f44-build
+          cd /tmp/f44-build/native/cluster-render
+          patch -p1 < "$GITHUB_WORKSPACE/f44-hud/cluster-render-0.9-to-minimal.patch"
+      - name: Test HUD rules
+        working-directory: /tmp/f44-build/native/cluster-render
+        run: |
+          make -j2 build/host/holds_test
+          build/host/holds_test
+      - name: Build for iDrive
+        working-directory: /tmp/f44-build/native/cluster-render
+        run: make JOBS=4 target
+      - name: Check executable
+        working-directory: /tmp/f44-build/native/cluster-render
+        run: |
+          file build/target/cluster-render-idrive7
+          readelf -h build/target/cluster-render-idrive7
+          sha256sum build/target/cluster-render-idrive7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f44-renderer-investigation
+          path: /tmp/f44-build/native/cluster-render/build/target/cluster-render-idrive7
+          if-no-files-found: error

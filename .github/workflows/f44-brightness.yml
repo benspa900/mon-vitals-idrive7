@@ -1,0 +1,31 @@
+name: Test F44 HUD brightness
+on:
+  push:
+    branches:
+      - "experiment/f44-hud-brightness"
+    paths:
+      - "f44-hud/sources-f44-hud.tar.gz"
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract modified source
+        run: tar -xzf f44-hud/sources-f44-hud.tar.gz
+      - name: Verify HUD and cluster shader selection
+        working-directory: native/cluster-render
+        run: |
+          make -j4 build/host/hud_gain_test
+          build/host/hud_gain_test
+      - name: Build for iDrive 7 with upstream Ubuntu 18.04 toolchain
+        working-directory: native/cluster-render
+        run: make -j4 target
+      - uses: actions/upload-artifact@v4
+        with:
+          name: f44-hud-brightness-test
+          path: native/cluster-render/build/target/cluster-render-idrive7
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,43 @@
+name: Waze HUD directions development tests
+on:
+  push:
+    branches: ["experiment/waze-directions"]
+    paths: ["development/waze-directions-dev.tar.gz", ".github/workflows/waze-directions-dev.yml"]
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: tar -xzf development/waze-directions-dev.tar.gz
+      - name: App integration and localization
+        run: |
+          node apps/robertn_waze_cluster/tools/test_i18n.js
+          node apps/robertn_waze_cluster/tools/test_control.js
+          node apps/robertn_waze_cluster/tools/test_page.js
+      - name: Guidance control and service tests
+        run: |
+          node native/waze-on-cluster/patch/test/hudguide_test.js
+          node native/waze-on-cluster/patch/test/patchd_hudarrows_test.js
+      - name: Native host tests
+        run: |
+          make -C native/waze-on-cluster -j4 test-bin
+          make -C native/waze-on-cluster test-cpp
+          make -C native/waze-on-cluster test-node
+      - name: Build source app
+        run: node apps/robertn_waze_cluster/tools/build.js
+  target:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: tar -xzf development/waze-directions-dev.tar.gz
+      - name: Build with unit ABI
+        run: make -C native/waze-on-cluster -j4 target
+      - uses: actions/upload-artifact@v4
+        with:
+          name: waze-directions-development-DO-NOT-INSTALL
+          path: native/waze-on-cluster/build/target/waze-on-cluster
+          retention-days: 7

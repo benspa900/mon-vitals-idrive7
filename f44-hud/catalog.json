@@ -4,23 +4,23 @@
     {
       "id": "f44-hud-bridge",
       "kind": "tool",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "title": "F44 HUD experimental",
-      "description": "HUD F44 experimental, moteur minimal 0.6.2",
+      "description": "HUD F44 experimental, moteur 0.6.3",
       "author": "benspa900",
       "mguHmi": [
         "ID7"
       ],
       "uninstallable": true,
       "requires": {
-        "cluster-render": "0.6.2",
+        "cluster-render": "0.6.3",
         "waze-on-cluster": "0.10.1"
       },
       "artifact": {
-        "name": "f44-hud-bridge@0.10.0.tgz",
-        "size": 449145,
-        "sha256": "abe89587eefe8318e6c4cf4fc424ed7ab0c5bd715f23f9c2b1d2887f50ca3fba",
-        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.10.0.tgz"
+        "name": "f44-hud-bridge@0.11.0.tgz",
+        "size": 449172,
+        "sha256": "37008795c8820ce8d3fbe26652ef7019dbe4a5fc219a990c7b2b22034251c3cb",
+        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.11.0.tgz"
       }
     }
   ]

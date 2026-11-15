@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "title": "F44 HUD experimental",
-  "description": "F44 HUD experimental - minimal renderer 0.6.2",
+  "description": "F44 HUD experimental - minimal renderer 0.6.3",
   "mguHmi": [
     "ID7"
   ],
@@ -11,7 +11,7 @@
     {
       "path": "launch.sh",
       "mode": "0755",
-      "sha256": "bab7626c286793ee5482aaa3b30dfc784b26d1a762e2a5696a3e109f16855255"
+      "sha256": "23eae2f95501255e08a2e4ed24646ded4ec172360d4e1f8fefd533f69c8456fc"
     },
     {
       "path": "clear-marker.sh",
@@ -21,7 +21,7 @@
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "77fd6038544b4481cadce9722b95b7e2f2da89ea1deb1d8a61d53f03a6830e39"
+      "sha256": "db7699662664f74689b7e99c57a7743174ce38b6d68dc7823f0963e7124bcdee"
     },
     {
       "path": "cluster-render.conf",

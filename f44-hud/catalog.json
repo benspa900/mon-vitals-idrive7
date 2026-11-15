@@ -1,0 +1,27 @@
+{
+  "schema": 2,
+  "components": [
+    {
+      "id": "f44-hud-bridge",
+      "kind": "tool",
+      "version": "0.1.0",
+      "title": "F44 HUD experimental",
+      "description": "Affichage HUD F44 experimental. Test a l arret uniquement.",
+      "author": "benspa900",
+      "mguHmi": [
+        "ID7"
+      ],
+      "uninstallable": true,
+      "requires": {
+        "cluster-render": "0.6.0",
+        "waze-on-cluster": "0.10.0"
+      },
+      "artifact": {
+        "name": "f44-hud-bridge@0.1.0.tgz",
+        "size": 448878,
+        "sha256": "4b1319eae8fb969dd80c76e82d7c0dc31126bae3576243373d019bd94c0b96b9",
+        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.1.0.tgz"
+      }
+    }
+  ]
+}

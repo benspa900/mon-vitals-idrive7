@@ -1,0 +1,44 @@
+{
+  "id": "f44-hud-bridge",
+  "kind": "tool",
+  "version": "0.1.0",
+  "title": "F44 HUD experimental",
+  "description": "Experimental F44 HUD bridge; requires exact official renderer",
+  "mguHmi": [
+    "ID7"
+  ],
+  "files": [
+    {
+      "path": "launch.sh",
+      "mode": "0755",
+      "sha256": "5534635ea43303e67cce396a6005a7a92b5bec0a43a0f42bddf126dfaab993dc"
+    },
+    {
+      "path": "clear-marker.sh",
+      "mode": "0755",
+      "sha256": "5b0053b64299069dd7d578b4cb8dfadb47fb316e09435adfca47257f4b875fb4"
+    },
+    {
+      "path": "cluster-render-idrive7",
+      "mode": "0755",
+      "sha256": "805e2b7c455895f2e384ae1f3e6bdb1e42c441c65fc5cf2240ac31c1178d27c6"
+    },
+    {
+      "path": "cluster-render.conf",
+      "mode": "0644",
+      "sha256": "e1808cf35e55aad106830cea0ef04eee092f344da31d271018fd0bab1b72f640"
+    }
+  ],
+  "dropins": [
+    {
+      "unit": "cluster-render.service",
+      "name": "90-f44-hud-bridge.conf"
+    }
+  ],
+  "activate": [
+    "clear-marker.sh"
+  ],
+  "deactivate": [
+    "clear-marker.sh"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "f44_traffic_diag",
+  "title": "Diagnostic panneaux F44",
+  "description": "Recherche en lecture seule des interfaces de panneaux et de feux",
+  "version": "0.1.0",
+  "vendor": "benspa900",
+  "loggingId": "OAF4",
+  "iconGlyph": "gauge",
+  "signals": {},
+  "screens": [
+    {
+      "name": "MAIN",
+      "kind": "canvas",
+      "title": "Diagnostic panneaux F44",
+      "buttons": [["BTN_NEXT", "Suivant"], ["BTN_REFRESH", "Actualiser"]]
+    }
+  ],
+  "settings": []
+}

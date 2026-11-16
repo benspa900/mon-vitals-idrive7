@@ -1,0 +1,44 @@
+diff --git a/native/cluster-render/src/holds.cpp b/native/cluster-render/src/holds.cpp
+index 74433ba..ec65a9e 100644
+--- a/native/cluster-render/src/holds.cpp
++++ b/native/cluster-render/src/holds.cpp
+@@ -125,11 +125,11 @@ bool load_holds(const HoldSettings &cfg, const std::vector<uint64_t> &allowed, s
+ 
+ bool hud_rules(TargetSpec *t, std::string *why)
+ {
+-    if (t->slot != kHudSlot || t->scene_id != kHudScene || t->take_over_stock) {
++    if (t->slot != 0x371 || t->scene_id != kHudScene || t->take_over_stock) {
+         char b[200];
+         std::snprintf(b, sizeof b, "only slot 0x%llx with scene 0x%llx, without hud_take_over_stock (hud_slot 0x%llx, "
+                       "hud_scene_id 0x%llx%s)",
+-                      (unsigned long long)kHudSlot, (unsigned long long)kHudScene, (unsigned long long)t->slot,
++                      (unsigned long long)0x371, (unsigned long long)kHudScene, (unsigned long long)t->slot,
+                       (unsigned long long)t->scene_id, t->take_over_stock ? ", hud_take_over_stock 1" : "");
+         *why = b;
+         return false;
+diff --git a/native/cluster-render/test/holds_test.cpp b/native/cluster-render/test/holds_test.cpp
+index f504926..df0ec3d 100644
+--- a/native/cluster-render/test/holds_test.cpp
++++ b/native/cluster-render/test/holds_test.cpp
+@@ -84,17 +84,17 @@ int main()
+     std::string err;
+     {
+         TargetSpec h;
+-        h.name = "hud"; h.slot = 0x323; h.scene_id = 0x01000400;
+-        ok("hud: slot 0x323 taken, with the HUD's share", hud_rules(&h, &err) && h.share);
++        h.name = "hud"; h.slot = 0x371; h.scene_id = 0x01000400;
++        ok("hud: slot 0x371 taken, with the HUD's share", hud_rules(&h, &err) && h.share);
+         TargetSpec scene;
+-        scene.name = "hud"; scene.slot = 0x323; scene.scene_id = 0x010004f0;
++        scene.name = "hud"; scene.slot = 0x371; scene.scene_id = 0x010004f0;
+         ok("hud: another scene id (the map's) refused", !hud_rules(&scene, &err) && !scene.share);
+         TargetSpec other;
+         other.name = "hud"; other.slot = 0x330; other.scene_id = 0x01000400;
+         ok("hud: any other slot refused, nothing set", !hud_rules(&other, &err) && !other.share &&
+                                                         err.find("hud_slot 0x330") != std::string::npos);
+         TargetSpec taking;
+-        taking.name = "hud"; taking.slot = 0x323; taking.scene_id = 0x01000400; taking.take_over_stock = true;
++        taking.name = "hud"; taking.slot = 0x371; taking.scene_id = 0x01000400; taking.take_over_stock = true;
+         ok("hud: a take-over from the stock HMI refused", !hud_rules(&taking, &err));
+     }
+     {

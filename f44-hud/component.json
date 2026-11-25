@@ -1,9 +1,9 @@
 {
   "id": "f44-hud-bridge",
   "kind": "tool",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "title": "F44 HUD experimental",
-  "description": "F44 HUD experimental - minimal renderer 0.6.4",
+  "description": "Carte Waze via CarPlay sur le HUD compact de la F44 (expérimental)",
   "mguHmi": [
     "ID7"
   ],
@@ -11,22 +11,22 @@
     {
       "path": "launch.sh",
       "mode": "0755",
-      "sha256": "67f5207906ae901d59c72f9d5bc6b730a4c18b6dda6ec92587bf862117a38613"
+      "sha256": "fa79de7d9b3562077f9ccad374a45f3b95df24aba177cc3ba43d99dc128c193e"
     },
     {
       "path": "clear-marker.sh",
       "mode": "0755",
-      "sha256": "5b0053b64299069dd7d578b4cb8dfadb47fb316e09435adfca47257f4b875fb4"
+      "sha256": "1b593749305639b5b50c8dcb2ab2f239c7d5a6a06dc57bf1ac5746359293763e"
     },
     {
       "path": "cluster-render-idrive7",
       "mode": "0755",
-      "sha256": "73a771c239b89ec051a1ef2d2cddf38d1e06790fa0c8f15458c6514cf0dfba01"
+      "sha256": "1ab4bbe37db6e7ab4684a10814bed5d27e4ccbea2624adec13d6b26bfa5732d6"
     },
     {
       "path": "cluster-render.conf",
       "mode": "0644",
-      "sha256": "280ee70f47942053b6e470f98d95ff1a5fff5ba365c19f79b185dd9675d141be"
+      "sha256": "5c5ce8c3c114391e5f7e4d2d57384726b7e082d364e4d635a20437c0c3f49dce"
     }
   ],
   "dropins": [
@@ -40,5 +40,10 @@
   ],
   "deactivate": [
     "clear-marker.sh"
-  ]
+  ],
+  "requires": {
+    "mgu-deploy": "0.7.17",
+    "cluster-render": "0.8.13",
+    "waze-on-cluster": "0.14.16"
+  }
 }

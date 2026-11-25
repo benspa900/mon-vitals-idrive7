@@ -1,9 +1,11 @@
 'use strict';
 const assert = require('assert');
+const crypto = require('crypto');
 const path = require('path');
 const sources = require(process.argv[2]);
 const root = path.resolve(__dirname, '..');
-sources.reader({ type:'file', path:root }, {}).catalog().then(c => {
+const reader = sources.reader({ type:'file', path:root }, { maxBuildBytes: 96 << 20 });
+reader.catalog().then(async c => {
     assert.deepStrictEqual(c.skipped, []);
     const app = c.components.find(x => x.id === 'benspa_vitals');
     const diagnostic = c.components.find(x => x.id === 'f44_traffic_diag');
@@ -16,5 +18,28 @@ sources.reader({ type:'file', path:root }, {}).catalog().then(c => {
     assert.deepStrictEqual(diagnostic.mguHmi, ['ID7']);
     assert.strictEqual(diagnostic.script.sdk, 'oap-sdk');
     assert.strictEqual(diagnostic.script.output, 'dist/f44_traffic_diag@0.1.0.tgz');
-    console.log('MGU Store catalog: ID7 apps, build and SDK configuration OK');
+    const bridge = c.components.find(x => x.id === 'f44-hud-bridge');
+    assert(bridge && bridge.uninstallable);
+    assert.deepStrictEqual(bridge.mguHmi, ['ID7']);
+    const folder = path.join(root, bridge.path);
+    const manifest = require(path.join(folder, 'component.json'));
+    const usb = sources.reader({ type: 'usb', root: folder }, {});
+    const catalog = await usb.catalog();
+    assert.strictEqual(catalog.components.length, 1);
+    const entry = catalog.components[0];
+    assert.strictEqual(entry.id, bridge.id);
+    assert.strictEqual(entry.version, bridge.version);
+    assert.deepStrictEqual(entry.requires, bridge.requires);
+    assert.deepStrictEqual(entry.requires, manifest.requires);
+    const bytes = await usb.artifact(entry);
+    assert.strictEqual(bytes.length, entry.artifact.size);
+    assert.strictEqual(crypto.createHash('sha256').update(bytes).digest('hex'), entry.artifact.sha256);
+    const files = sources.subtree(await reader.files(null, null, bridge.path), bridge.path);
+    for (const file of manifest.files) {
+        const source = files.find(f => f.name === file.path);
+        assert(source, file.path);
+        assert.strictEqual(crypto.createHash('sha256').update(source.data).digest('hex'), file.sha256, file.path);
+    }
+    assert(bytes.equals(sources.packComponent(bridge, files)), 'USB and repo packages differ');
+    console.log('MGU Store catalog: apps, F44 dependencies, file hashes and USB package OK');
 }).catch(e => { console.error(e); process.exit(1); });

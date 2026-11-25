@@ -39,8 +39,9 @@
       "path": "f44-hud",
       "uninstallable": true,
       "requires": {
-        "cluster-render": "0.6.4",
-        "waze-on-cluster": "0.10.3"
+        "mgu-deploy": "0.7.17",
+        "cluster-render": "0.8.13",
+        "waze-on-cluster": "0.14.16"
       }
     }
   ]

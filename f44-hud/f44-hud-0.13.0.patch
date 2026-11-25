@@ -1,0 +1,156 @@
+diff --git a/native/cluster-render/cluster-render.conf b/native/cluster-render/cluster-render.conf
+index d3666b6..0ecb372 100644
+--- a/native/cluster-render/cluster-render.conf
++++ b/native/cluster-render/cluster-render.conf
+@@ -114,24 +114,17 @@ panel_fallback_scene_id = 0x01000400
+ panel_size = 1920x720
+ panel_linger_ms = 3000
+ panel_take_over_stock = 0
+-# The HUD (VERIFIED on the car with the Waze map on a G80 and a G05; its
+-# 800x480 size is a guess), README.md "The HUD": only slot 0x323 with scene
+-# 0x01000400, and never taking a slot from the stock HMI
+-# (hud_take_over_stock 0), BMW's HUD guidance included; any other value
+-# leaves the HUD out and the service runs without it. It shows with the
+-# panel, unless the panel has fallen back to this id. Its layers write from the
+-# HUD's share of the upload budget (up to half, only what they spend, the
+-# rest going back to the cluster; README.md "Upload budget"), and its
+-# evidence never moves the cap.
+-hud_slot = 0x323
++# F44 compact HUD. Use the shared ID7 scene and leave BMW's slot ownership
++# and the renderer's adaptive upload budget in effect.
++hud_slot = 0x371
+ hud_content_class = 0
+ hud_scene_id = 0x01000400
+-hud_size = 800x480
++hud_size = 500x210
+ hud_linger_ms = 3000
+ hud_take_over_stock = 0
+ # The stock HMI's pop-up slots a target gives way to, and how long after the
+ # pop-up goes it is asked for again; route guidance in them never counts, and
+-# a layer with yield 0 (PROTOCOL.md) keeps its target shown. The HUD's media
++# the F44 HUD yields even if a layer asks to stay shown. The HUD's media
+ # and list pop-ups show in 0x322 (content 0x1000251, class 512; VERIFIED on a
+ # G05): the KOMBI takes the HUD map down for them, and asking for it again
+ # while they show pushed them from the HUD to the cluster (0x1000351 in
+diff --git a/native/cluster-render/src/holds.cpp b/native/cluster-render/src/holds.cpp
+index 74433ba..38fc944 100644
+--- a/native/cluster-render/src/holds.cpp
++++ b/native/cluster-render/src/holds.cpp
+@@ -135,6 +135,7 @@ bool hud_rules(TargetSpec *t, std::string *why)
+         return false;
+     }
+     t->share = true;
++    t->always_yield = true;
+     return true;
+ }
+ 
+diff --git a/native/cluster-render/src/holds.h b/native/cluster-render/src/holds.h
+index ebd19b1..3ea2eaf 100644
+--- a/native/cluster-render/src/holds.h
++++ b/native/cluster-render/src/holds.h
+@@ -37,8 +37,8 @@ struct HoldSettings {
+ bool load_holds(const HoldSettings &cfg, const std::vector<uint64_t> &allowed, std::vector<TargetSpec> *targets,
+                 std::string *warn);
+ 
+-/* The HUD's slot and scene on iDrive 7 (README.md "The HUD"). */
+-const uint64_t kHudSlot = 0x323, kHudScene = 0x01000400;
++/* F44 compact HUD, using the existing ID7 shared scene. */
++const uint64_t kHudSlot = 0x371, kHudScene = 0x01000400;
+ 
+ /* The iDrive 7 HUD's rules for t, the hud target: only slot kHudSlot with
+  * scene kHudScene, never
+diff --git a/native/cluster-render/src/slots.cpp b/native/cluster-render/src/slots.cpp
+index f320633..71eb713 100644
+--- a/native/cluster-render/src/slots.cpp
++++ b/native/cluster-render/src/slots.cpp
+@@ -261,7 +261,7 @@ void SlotManager::want(int i, bool wanted, bool contend, bool guide_hold, bool y
+     t_[i].wanted = wanted && !t_[i].refused;
+     t_[i].contend = t_[i].wanted && contend;
+     t_[i].guide_hold = guide_hold;
+-    t_[i].yield = yield;
++    t_[i].yield = specs_[i].always_yield || yield;
+     t_[i].preload = preload && !t_[i].refused;
+ }
+ 
+diff --git a/native/cluster-render/src/slots.h b/native/cluster-render/src/slots.h
+index f226a44..bbd64be 100644
+--- a/native/cluster-render/src/slots.h
++++ b/native/cluster-render/src/slots.h
+@@ -316,6 +316,7 @@ struct TargetSpec {
+      * goes, the target is asked for again. */
+     std::vector<uint64_t> yield_slots;
+     int yield_ms = 1500;
++    bool always_yield = false;   /* F44 HUD keeps configured BMW pop-ups visible across profile changes. */
+     /* Its layers write from the HUD's share of the upload budget, and its
+      * evidence never moves the upload cap (compositor.h). The HUD's. */
+     bool share = false;
+diff --git a/native/cluster-render/test/holds_test.cpp b/native/cluster-render/test/holds_test.cpp
+index f504926..c095998 100644
+--- a/native/cluster-render/test/holds_test.cpp
++++ b/native/cluster-render/test/holds_test.cpp
+@@ -84,17 +84,17 @@ int main()
+     std::string err;
+     {
+         TargetSpec h;
+-        h.name = "hud"; h.slot = 0x323; h.scene_id = 0x01000400;
+-        ok("hud: slot 0x323 taken, with the HUD's share", hud_rules(&h, &err) && h.share);
++        h.name = "hud"; h.slot = 0x371; h.scene_id = 0x01000400;
++        ok("hud: slot 0x371 taken, with the HUD's share", hud_rules(&h, &err) && h.share && h.always_yield);
+         TargetSpec scene;
+-        scene.name = "hud"; scene.slot = 0x323; scene.scene_id = 0x010004f0;
++        scene.name = "hud"; scene.slot = 0x371; scene.scene_id = 0x010004f0;
+         ok("hud: another scene id (the map's) refused", !hud_rules(&scene, &err) && !scene.share);
+         TargetSpec other;
+         other.name = "hud"; other.slot = 0x330; other.scene_id = 0x01000400;
+         ok("hud: any other slot refused, nothing set", !hud_rules(&other, &err) && !other.share &&
+                                                         err.find("hud_slot 0x330") != std::string::npos);
+         TargetSpec taking;
+-        taking.name = "hud"; taking.slot = 0x323; taking.scene_id = 0x01000400; taking.take_over_stock = true;
++        taking.name = "hud"; taking.slot = 0x371; taking.scene_id = 0x01000400; taking.take_over_stock = true;
+         ok("hud: a take-over from the stock HMI refused", !hud_rules(&taking, &err));
+     }
+     {
+diff --git a/native/cluster-render/test/slots_test.cpp b/native/cluster-render/test/slots_test.cpp
+index c29d058..2f1a818 100644
+--- a/native/cluster-render/test/slots_test.cpp
++++ b/native/cluster-render/test/slots_test.cpp
+@@ -4601,13 +4601,16 @@ int main()
+     preload_popup();
+     preload_unmap_table();
+     preload_stalls_no_reconnect();
+-    {
++    for (bool compact : {false, true}) {
+         /* The HUD's media pop-up (0x322): the HUD map gives way while it shows */
+         TargetSpec hud2;
+         FakePort port2;
+         FakeScenes scenes2;
+         SlotManager m2{&port2, &scenes2};
+         hud2.name = "hud"; hud2.slot = kHudSlot; hud2.scene_id = kPanelScene; hud2.width = 800; hud2.height = 480;
++        const uint64_t slot = compact ? 0x371 : kHudSlot;
++        hud2.slot = slot;
++        hud2.always_yield = compact;
+         hud2.linger_ms = 3000;
+         hud2.yield_slots = {0x322};
+         hud2.yield_ms = 1500;
+@@ -4619,18 +4622,18 @@ int main()
+             m2.on_slots({si}, now);
+         };
+         calls.clear();
+-        m2.want(0, true, true);
++        m2.want(0, true, true, true, !compact);   /* F44 client asks to stay over the list */
+         run(1200);
+         m2.on_shown(kPanelScene, now);
+         run(20);
+         ok("popup: the HUD map asked for and shown", m2.status(0).state == TargetState::Shown);
+         calls.clear();
+         row(0x322, 2, 0x01000251, 1);          /* the media list opens in the HUD */
+-        row(kHudSlot, 0, kPanelScene, 1);      /* the KOMBI takes the map down for it */
++        row(slot, 0, kPanelScene, 1);      /* the KOMBI takes the map down for it */
+         run(50);
+         ok("popup: the map releases its slot and waits",
+            m2.status(0).state == TargetState::Waiting && joined().find("release hud") != std::string::npos);
+-        row(kHudSlot, 1, kPanelScene, 0);      /* the HUD slot is free again while the pop-up shows */
++        row(slot, 1, kPanelScene, 0);      /* the HUD slot is free again while the pop-up shows */
+         run(3000);
+         ok("popup: not asked for while the pop-up shows, though the slot is free",
+            m2.status(0).state == TargetState::Waiting && joined().find("request hud") == std::string::npos);

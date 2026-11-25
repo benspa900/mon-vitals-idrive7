@@ -28,6 +28,10 @@ Régime, vitesse et rapport au centre, entourés de jauges doubles de régime et
 
 Pour une installation déjà présente, actualiser les sources dans le Store, puis choisir la mise à jour de **Mon Vitals**. La version 0.9.6 adapte les échelles des jauges de droite. La disponibilité de la pédale et de la charge dépend du calculateur. **Ne pas interpréter une valeur de démonstration comme une mesure.** Le Store permet normalement de retirer l'application.
 
+## Waze sur le HUD de la F44
+
+Le composant **F44 HUD experimental** du même catalogue adapte la carte Waze via CarPlay au HUD compact de la F44. La version 0.13.0 vise `cluster-render 0.8.13` et `waze-on-cluster 0.14.16`. [Installation, réglages et premier essai](f44-hud/README.md).
+
 ## Émulateur sur Mac
 
 Sur le Mac où ce projet a été préparé, double-cliquer sur **Ouvrir l-emulateur.command**. Le navigateur ouvre `http://127.0.0.1:8077/`. Le panneau permet de simuler les signaux et de choisir les réglages ; aucune donnée de la voiture n'est lue. Fermer la fenêtre Terminal pour arrêter l'émulateur.

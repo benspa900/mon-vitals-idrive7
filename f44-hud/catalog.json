@@ -4,23 +4,24 @@
     {
       "id": "f44-hud-bridge",
       "kind": "tool",
-      "version": "0.12.0",
+      "version": "0.13.0",
       "title": "F44 HUD experimental",
-      "description": "HUD F44 experimental, moteur 0.6.4",
+      "description": "Carte Waze via CarPlay sur le HUD compact de la F44 (expérimental)",
       "author": "benspa900",
       "mguHmi": [
         "ID7"
       ],
       "uninstallable": true,
       "requires": {
-        "cluster-render": "0.6.4",
-        "waze-on-cluster": "0.10.3"
+        "mgu-deploy": "0.7.17",
+        "cluster-render": "0.8.13",
+        "waze-on-cluster": "0.14.16"
       },
       "artifact": {
-        "name": "f44-hud-bridge@0.12.0.tgz",
-        "size": 449446,
-        "sha256": "f9169801823b4ad97afc64dd24c90ed70c8d6fe6e89c83a2c28666451d6ab676",
-        "url": "https://raw.githubusercontent.com/benspa900/mon-vitals-idrive7/main/f44-hud/f44-hud-bridge%400.12.0.tgz"
+        "name": "f44-hud-bridge@0.13.0.tgz",
+        "size": 597683,
+        "sha256": "423e5c831f7061fede0a2a27d499486f4c29a4111b8483d00e7842f75905e9b8",
+        "url": "f44-hud-bridge@0.13.0.tgz"
       }
     }
   ]
